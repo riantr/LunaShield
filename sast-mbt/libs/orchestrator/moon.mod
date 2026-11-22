@@ -17,4 +17,5 @@ import {
   "sast/rule@0.1.0",
   "sast/scoring@0.1.0",
   "sast/source-file@0.1.0",
+  "sast/taint@0.1.0",
 }

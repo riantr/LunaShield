@@ -10,6 +10,15 @@ pub suberror ScanError {
 }
 
 ///|
+/// Resolved taint manifest plus the digest that goes into the cache key. The
+/// digest includes the mode name, so off/report/strict never share cached
+/// findings even when they read the same manifest.
+priv struct TaintSetup {
+  spec : @taint.TaintSpec?
+  digest : String
+}
+
+///|
 /// Result of one scan plus bookkeeping the CLI prints (rule count, cache stats).
 pub(all) struct ScanOutcome {
   result : @core.ScanResult
@@ -35,6 +44,7 @@ priv struct FileScan {
 priv struct CacheCtx {
   dir : String
   rules_digest : String
+  taint_digest : String
   analyzer_version : String
 }
 
@@ -95,6 +105,73 @@ pub async fn load_rules(rules_path : String) -> Array[@rule.Rule] {
 }
 
 ///|
+/// Last POSIX or Windows separator in a path, whichever comes later. Paths
+/// arrive from the CLI verbatim, so `D:\pack\rules.json` must resolve its
+/// sibling manifest just as `pack/rules.json` does.
+fn last_separator(path : String) -> Int32? {
+  let slash = path.rev_find("/")
+  let backslash = path.rev_find("\\")
+  match (slash, backslash) {
+    (Some(a), Some(b)) => if a > b { Some(a) } else { Some(b) }
+    (Some(a), None) => Some(a)
+    (None, Some(b)) => Some(b)
+    (None, None) => None
+  }
+}
+
+///|
+/// `taint.json` sits next to `rules.json` (or directly in the pack directory).
+pub fn taint_file(rules_path : String) -> String {
+  if rules_path.has_suffix(".json") {
+    match last_separator(rules_path) {
+      Some(i) => rules_path[:i + 1].to_owned() + "taint.json"
+      None => "taint.json"
+    }
+  } else {
+    let sep = match rules_path.rev_find("\\") {
+      Some(_) => "\\"
+      None => "/"
+    }
+    rules_path + sep + "taint.json"
+  }
+}
+
+///|
+/// Load the optional taint manifest. A missing file is a no-op — the safe
+/// default that keeps pre-S4b behaviour — while a malformed or inconsistent
+/// one is a setup error when the user explicitly asked for taint analysis.
+async fn load_taint(
+  rules_path : String,
+  rule_ids : Array[String],
+  mode : @config.TaintMode,
+) -> TaintSetup {
+  let prefix = @config.taint_mode_name(mode)
+  if mode == @config.Off {
+    return { spec: None, digest: prefix, }
+  }
+  let path = taint_file(rules_path)
+  let text = @fs.read_file(path).text() catch {
+    _ => return { spec: None, digest: prefix + "|none", }
+  }
+  let value = @json.parse(text) catch {
+    e => raise ScanError(message="taint file is not valid JSON: \{path}: \{e}")
+  }
+  let spec = @taint.parse_spec(value) catch {
+    @taint.TaintSpecError(message~) =>
+      raise ScanError(
+        message="taint file failed schema checks: \{path}: \{message}",
+      )
+  }
+  @taint.validate_spec(spec, rule_ids) catch {
+    @taint.TaintSpecError(message~) =>
+      raise ScanError(
+        message="taint file failed validation: \{path}: \{message}",
+      )
+  }
+  { spec: Some(spec), digest: prefix + "|" + @source-file.sha256_hex(text), }
+}
+
+///|
 /// Union of the extensions of the requested languages.
 fn extensions_for(langs : Array[String]) -> Array[String] {
   let out : Array[String] = []
@@ -133,6 +210,8 @@ async fn scan_one(
   rules : Array[@rule.Rule],
   max_bytes : Int32,
   cache : CacheCtx?,
+  taint_spec : @taint.TaintSpec?,
+  taint_mode : @config.TaintMode,
 ) -> FileScan {
   match @source-file.read_source(fs_path(root, path), max_bytes) {
     @source-file.Skip(reason) =>
@@ -161,7 +240,9 @@ async fn scan_one(
       let ctx = match cache {
         Some(c) => c
         None => {
-          let fs = analyze(path, spec, text, rules, bytes)
+          let fs = analyze(
+            path, spec, text, rules, bytes, taint_spec, taint_mode,
+          )
           return fs
         }
       }
@@ -172,6 +253,7 @@ async fn scan_one(
         path,
         content_hash,
         ctx.rules_digest,
+        ctx.taint_digest,
         ctx.analyzer_version,
       )
       match
@@ -181,6 +263,7 @@ async fn scan_one(
           path,
           content_hash,
           ctx.rules_digest,
+          ctx.taint_digest,
           ctx.analyzer_version,
         ) {
         Some(entry) =>
@@ -193,13 +276,16 @@ async fn scan_one(
             cache_hit: true,
           }
         None => {
-          let fs = analyze(path, spec, text, rules, bytes)
+          let fs = analyze(
+            path, spec, text, rules, bytes, taint_spec, taint_mode,
+          )
           @cache.save(
             ctx.dir,
             @cache.make_entry(
               path,
               content_hash,
               ctx.rules_digest,
+              ctx.taint_digest,
               ctx.analyzer_version,
               fs.bytes,
               fs.raw_hits,
@@ -215,21 +301,39 @@ async fn scan_one(
 }
 
 ///|
-/// Parse + query + suppress, without touching the cache.
+/// Parse + query + taint verdict + suppress, without touching the cache.
+/// `Off` never calls the analyzer: every hit stays `NotApplicable`, so the
+/// pre-S4b output is reproduced exactly. `Strict` drops only verdicts the
+/// analyzer actively refuted; `NotApplicable` findings are always preserved.
 fn analyze(
   path : String,
   spec : @lang.LanguageSpec,
   text : String,
   rules : Array[@rule.Rule],
   bytes : Int32,
+  taint_spec : @taint.TaintSpec?,
+  taint_mode : @config.TaintMode,
 ) -> FileScan {
   let parsed = @parser.parse(spec, text, path)
   let suppressions = @scoring.parse_suppressions(text)
   let run = @query-engine.run_rules(parsed, rules)
   let findings : Array[@core.Finding] = []
   for h in run.hits {
-    if !@scoring.is_hit_suppressed(suppressions, h.primary.line, h.rule_id) {
-      findings.push(@scoring.finding_from_hit(h))
+    let mut hit = h
+    if taint_mode != @config.Off {
+      match taint_spec {
+        Some(manifest) => {
+          let result = @taint.analyze_with_spec(parsed, hit, manifest)
+          hit = { ..hit, taint: result.verdict, }
+        }
+        None => ()
+      }
+    }
+    if taint_mode == @config.Strict && @scoring.is_weak_verdict(hit.taint) {
+      continue
+    }
+    if !@scoring.is_hit_suppressed(suppressions, hit.primary.line, hit.rule_id) {
+      findings.push(@scoring.finding_from_hit(hit))
     }
   }
   let warnings = parsed.warnings
@@ -311,10 +415,16 @@ pub async fn scan(
     Some(v) => v
     None => "0.1.0"
   }
+  let taint = load_taint(
+    config.rules_path,
+    rules.map(fn(r) { r.id }),
+    config.taint_mode,
+  )
   let cache : CacheCtx? = if config.incremental {
     Some({
       dir: config.cache_dir,
       rules_digest: pack.digest,
+      taint_digest: taint.digest,
       analyzer_version: analyzer,
     })
   } else {
@@ -351,6 +461,8 @@ pub async fn scan(
           rules,
           @source-file.DEFAULT_MAX_BYTES,
           cache,
+          taint.spec,
+          config.taint_mode,
         )
         results.push(fs)
       })

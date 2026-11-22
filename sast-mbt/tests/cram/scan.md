@@ -62,3 +62,42 @@ $ mkdir -p src && printf '%s' '[{"id":"JS001","language":"javascript","severity"
 "level":"error"
 "startLine":1
 ```
+
+## `--taint report` annotates confidence without dropping findings
+
+```mooncram
+$ mkdir -p src && printf '%s' '[{"id":"JS001","language":"javascript","severity":"high","cwe":[95],"owasp":[],"query":"(call_expression function: (identifier) @callee arguments: (arguments . (_) @arg)) @call","predicates":[{"kind":"text_equals","capture":"callee","value":"eval"}],"message":"eval","enabled":true}]' > rules.json && printf '%s' '{"version":"1.0.0","languages":[{"language":"javascript","sources":[{"name":"q","node_kind":"member_expression","text_contains":"req.query"}],"sanitizers":[{"name":"esc","callee_contains":"escapeHtml"}],"sinks":[{"rule_id":"JS001","capture":"arg"}]}]}' > taint.json && printf 'function f(req) { eval(req.query.x); }\n' > src/a.js && printf 'function f(req) { eval(escapeHtml(req.query.x)); }\n' > src/b.js && (scan.exe src --rules rules.json --taint report --format json --out out --fail-on never > /dev/null; grep -o '"confidence":"[a-z]*"' out/findings.json)
+"confidence":"high"
+"confidence":"low"
+```
+
+## `--taint strict` drops only the refuted finding
+
+```mooncram
+$ mkdir -p src && printf '%s' '[{"id":"JS001","language":"javascript","severity":"high","cwe":[95],"owasp":[],"query":"(call_expression function: (identifier) @callee arguments: (arguments . (_) @arg)) @call","predicates":[{"kind":"text_equals","capture":"callee","value":"eval"}],"message":"eval","enabled":true}]' > rules.json && printf '%s' '{"version":"1.0.0","languages":[{"language":"javascript","sources":[{"name":"q","node_kind":"member_expression","text_contains":"req.query"}],"sanitizers":[{"name":"esc","callee_contains":"escapeHtml"}],"sinks":[{"rule_id":"JS001","capture":"arg"}]}]}' > taint.json && printf 'function f(req) { eval(req.query.x); }\n' > src/a.js && printf 'function f(req) { eval(escapeHtml(req.query.x)); }\n' > src/b.js && scan.exe src --rules rules.json --taint strict --format console --fail-on never
+LunaShield 0.1.0
+files: 2 scanned, 0 skipped, 2 raw hits
+findings: 1 (critical 0, high 1, medium 0, low 0, info 0)
+a.js:1:19 JS001 [high] eval
+warnings: 0
+```
+
+## `--taint off` keeps the pre-taint output byte for byte
+
+```mooncram
+$ mkdir -p src && printf '%s' '[{"id":"JS001","language":"javascript","severity":"high","cwe":[95],"owasp":[],"query":"(call_expression function: (identifier) @callee arguments: (arguments . (_) @arg)) @call","predicates":[{"kind":"text_equals","capture":"callee","value":"eval"}],"message":"eval","enabled":true}]' > rules.json && printf '%s' '{"version":"1.0.0","languages":[{"language":"javascript","sources":[{"name":"q","node_kind":"member_expression","text_contains":"req.query"}],"sanitizers":[{"name":"esc","callee_contains":"escapeHtml"}],"sinks":[{"rule_id":"JS001","capture":"arg"}]}]}' > taint.json && printf 'function f(req) { eval(req.query.x); }\n' > src/a.js && printf 'function f(req) { eval(escapeHtml(req.query.x)); }\n' > src/b.js && scan.exe src --rules rules.json --taint off --format console --fail-on never
+LunaShield 0.1.0
+files: 2 scanned, 0 skipped, 2 raw hits
+findings: 2 (critical 0, high 2, medium 0, low 0, info 0)
+a.js:1:19 JS001 [high] eval
+b.js:1:19 JS001 [high] eval
+warnings: 0
+```
+
+## Invalid `--taint` mode is an argument error
+
+```mooncram
+$ scan.exe . --taint bogus
+error: unknown taint mode 'bogus', expected off|report|strict
+[2]
+```

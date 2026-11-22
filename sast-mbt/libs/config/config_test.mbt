@@ -31,6 +31,19 @@ test "fail-on parsing and threshold gate" {
 }
 
 ///|
+test "taint mode: parsing, stable names and default off" {
+  assert_eq(@config.default_config("x").taint_mode, @config.Off)
+  assert_eq(@config.parse_taint_mode("off"), Some(@config.Off))
+  assert_eq(@config.parse_taint_mode("report"), Some(@config.Report))
+  assert_eq(@config.parse_taint_mode("strict"), Some(@config.Strict))
+  assert_true(@config.parse_taint_mode("STRICT") is None)
+  assert_true(@config.parse_taint_mode("") is None)
+  assert_eq(@config.taint_mode_name(@config.Off), "off")
+  assert_eq(@config.taint_mode_name(@config.Report), "report")
+  assert_eq(@config.taint_mode_name(@config.Strict), "strict")
+}
+
+///|
 test "shard assignment is deterministic and partitions paths" {
   let c0 = @config.ScanConfig::{
     ..@config.default_config("x"),

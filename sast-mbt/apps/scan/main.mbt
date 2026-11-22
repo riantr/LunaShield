@@ -13,7 +13,8 @@ fn usage() -> String {
   "  --ignore <pattern>    extra ignore pattern (repeatable)\n" +
   "  --max-concurrency <n> per-file concurrency (default: 4)\n" +
   "  --incremental         reuse per-file results from --cache-dir\n" +
-  "  --cache-dir <dir>     cache location (default: .lunashield-cache)\n"
+  "  --cache-dir <dir>     cache location (default: .lunashield-cache)\n" +
+  "  --taint <mode>        off|report|strict taint analysis (default: off)\n"
 }
 
 ///|
@@ -164,6 +165,15 @@ async fn main {
     } else if arg == "--cache-dir" {
       let value = arg_or_fail(args, i)
       cfg = { ..cfg, cache_dir: value, }
+      i += 2
+    } else if arg == "--taint" {
+      let value = arg_or_fail(args, i)
+      let mode = match @config.parse_taint_mode(value) {
+        Some(m) => m
+        None =>
+          fail("unknown taint mode '\{value}', expected off|report|strict")
+      }
+      cfg = { ..cfg, taint_mode: mode, }
       i += 2
     } else if arg == "--max-concurrency" {
       let value = arg_or_fail(args, i)

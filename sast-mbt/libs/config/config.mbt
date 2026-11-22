@@ -8,6 +8,38 @@ pub(all) enum FailOn {
 }
 
 ///|
+/// Taint analysis mode. `Off` is the default: enabling taint is an explicit
+/// choice, so every existing invocation keeps its pre-S4b output byte for byte.
+/// `Report` annotates confidence from the verdict; `Strict` additionally drops
+/// refuted hits (Sanitized / NoSource).
+#derive(Debug, Eq)
+pub(all) enum TaintMode {
+  Off
+  Report
+  Strict
+}
+
+///|
+pub fn parse_taint_mode(s : String) -> TaintMode? {
+  match s {
+    "off" => Some(Off)
+    "report" => Some(Report)
+    "strict" => Some(Strict)
+    _ => None
+  }
+}
+
+///|
+/// Stable lowercase name, also used to partition the incremental cache.
+pub fn taint_mode_name(mode : TaintMode) -> String {
+  match mode {
+    Off => "off"
+    Report => "report"
+    Strict => "strict"
+  }
+}
+
+///|
 pub(all) struct ScanConfig {
   root : String
   langs : Array[String]
@@ -22,6 +54,7 @@ pub(all) struct ScanConfig {
   incremental : Bool
   rulepack_version : String
   cache_dir : String
+  taint_mode : TaintMode
 }
 
 ///|
@@ -47,6 +80,7 @@ pub fn default_config(root : String) -> ScanConfig {
     incremental: false,
     rulepack_version: "",
     cache_dir: ".lunashield-cache",
+    taint_mode: Off,
   }
 }
 
