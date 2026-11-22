@@ -116,9 +116,14 @@ async fn main {
     } else if arg == "--format" {
       let value = arg_or_fail(args, i)
       let formats = split_csv(value)
+      guard formats.length() > 0 else {
+        fail("--format needs at least one format")
+      }
       for f in formats {
-        guard one_of(f, ["console", "json", "junit", "sarif"]) else {
-          fail("unknown format '\{f}', expected console,json,junit,sarif")
+        guard @report.reporter_for(f) is Some(_) else {
+          fail(
+            "unknown format '\{f}', expected \{@report.supported_formats().join(",")}",
+          )
         }
       }
       cfg = { ..cfg, formats, }
@@ -187,29 +192,26 @@ async fn main {
     }
   }
 
-  println(@report.render_console(outcome.result))
-  if one_of("json", cfg.formats) {
-    let json = @report.render_json(outcome.result)
-    if out_dir.length() > 0 {
-      write_report(out_dir, "findings.json", json + "\n")
-    } else {
-      println(json)
+  // Emit in the canonical order from `supported_formats`, never in user CSV
+  // order: mixed `--format` invocations must stay byte-stable.
+  for fmt in @report.supported_formats() {
+    if !one_of(fmt, cfg.formats) {
+      continue
     }
-  }
-  if one_of("junit", cfg.formats) {
-    let junit = @report.render_junit(outcome.result)
-    if out_dir.length() > 0 {
-      write_report(out_dir, "junit.xml", junit + "\n")
-    } else {
-      println(junit)
-    }
-  }
-  if one_of("sarif", cfg.formats) {
-    let sarif = @report.render_sarif(outcome.result)
-    if out_dir.length() > 0 {
-      write_report(out_dir, "findings.sarif", sarif + "\n")
-    } else {
-      println(sarif)
+    match @report.reporter_for(fmt) {
+      None => ()
+      Some(rep) => {
+        let text = rep.render(outcome.result)
+        match rep.file_name() {
+          None => println(text)
+          Some(name) =>
+            if out_dir.length() > 0 {
+              write_report(out_dir, name, text + "\n")
+            } else {
+              println(text)
+            }
+        }
+      }
     }
   }
 
