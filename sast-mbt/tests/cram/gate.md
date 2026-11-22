@@ -65,3 +65,11 @@ files: 1 scanned, 0 skipped, 1 raw hits
 $ mkdir -p src && printf '%s' '[{"id":"JS001","language":"javascript","severity":"high","cwe":[95],"owasp":["A03:2021"],"query":"(call_expression function: (identifier) @callee arguments: (arguments . (_) @arg)) @call","predicates":[{"kind":"text_equals","capture":"callee","value":"eval"},{"kind":"not_has_prefix","capture":"arg","value":"\""}],"message":"Dynamic code execution via eval()","enabled":true}]' > rules.json && printf 'eval(userInput);\n' > src/a.js && (scan.exe src --rules rules.json --format json --out d1 > /dev/null; scan.exe src --rules rules.json --format json --out d2 > /dev/null; cmp d1/findings.json d2/findings.json && echo IDENTICAL)
 IDENTICAL
 ```
+
+## Incremental cache: second run hits and output is unchanged
+
+```mooncram
+$ rm -rf w && mkdir -p w/src && printf '%s' '[{"id":"JS001","language":"javascript","severity":"high","cwe":[95],"owasp":["A03:2021"],"query":"(call_expression function: (identifier) @callee arguments: (arguments . (_) @arg)) @call","predicates":[{"kind":"text_equals","capture":"callee","value":"eval"},{"kind":"not_has_prefix","capture":"arg","value":"\""}],"message":"Dynamic code execution via eval()","enabled":true}]' > w/rules.json && printf 'eval(userInput);\n' > w/src/a.js && (scan.exe w/src --rules w/rules.json --format json --out w/full > /dev/null; scan.exe w/src --rules w/rules.json --format json --out w/inc --incremental --cache-dir w/cache > /dev/null; cmp w/full/findings.json w/inc/findings.json && echo SAME; scan.exe w/src --rules w/rules.json --format console --incremental --cache-dir w/cache | tail -1)
+SAME
+cache: 1 hit, 0 miss
+```

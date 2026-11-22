@@ -147,33 +147,33 @@ fn compare_findings(a : @core.Finding, b : @core.Finding) -> Int32 {
 }
 
 ///|
-/// Convert raw hits into a `ScanResult`: apply suppressions, compute
-/// fingerprints, sort deterministically, then keep the first finding per
-/// fingerprint (the same defect reported twice collapses to one).
-pub fn finalize_with(
-  hits : Array[@core.RawHit],
-  suppressions : Array[Suppression],
-) -> @core.ScanResult {
-  let findings : Array[@core.Finding] = []
-  for h in hits {
-    if !is_hit_suppressed(suppressions, h.primary.line, h.rule_id) {
-      findings.push({
-        rule_id: h.rule_id,
-        severity: h.severity,
-        confidence: @core.High,
-        cwe: h.cwe,
-        owasp: h.owasp,
-        primary: h.primary,
-        related: [],
-        message: h.message,
-        snippet: h.snippet,
-        fingerprint: make_fingerprint(h.rule_id, h.snippet),
-      })
-    }
+/// Convert one raw hit into a finding (fingerprint computed here).
+pub fn finding_from_hit(h : @core.RawHit) -> @core.Finding {
+  {
+    rule_id: h.rule_id,
+    severity: h.severity,
+    confidence: @core.High,
+    cwe: h.cwe,
+    owasp: h.owasp,
+    primary: h.primary,
+    related: [],
+    message: h.message,
+    snippet: h.snippet,
+    fingerprint: make_fingerprint(h.rule_id, h.snippet),
   }
+}
+
+///|
+/// Sort findings into the canonical total order and drop duplicates.
+///
+/// Dedupe is per `(path, fingerprint)`: the same snippet in two files is two
+/// defects, repeated matches inside one file collapse to one. `raw_hits` is
+/// carried through so reports can show pre-dedupe volume.
+pub fn finalize_findings(
+  findings : Array[@core.Finding],
+  raw_hits : Int32,
+) -> @core.ScanResult {
   findings.mut_view().sort_by(compare_findings)
-  // Dedupe per (path, fingerprint): the same snippet in two different files is
-  // two defects, while repeated matches inside one file collapse to one.
   let seen : Map[String, Bool] = Map([])
   let unique : Array[@core.Finding] = []
   for f in findings {
@@ -194,10 +194,26 @@ pub fn finalize_with(
       files_scanned: 0,
       files_skipped: 0,
       bytes_scanned: 0,
-      raw_hits: hits.length().to_int(),
+      raw_hits,
       duration_ms: 0,
     },
   }
+}
+
+///|
+/// Convert raw hits into a `ScanResult`: apply suppressions, compute
+/// fingerprints, then sort and dedupe.
+pub fn finalize_with(
+  hits : Array[@core.RawHit],
+  suppressions : Array[Suppression],
+) -> @core.ScanResult {
+  let findings : Array[@core.Finding] = []
+  for h in hits {
+    if !is_hit_suppressed(suppressions, h.primary.line, h.rule_id) {
+      findings.push(finding_from_hit(h))
+    }
+  }
+  finalize_findings(findings, hits.length().to_int())
 }
 
 ///|

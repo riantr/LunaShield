@@ -21,6 +21,7 @@ pub(all) struct ScanConfig {
   max_concurrency : Int32
   incremental : Bool
   rulepack_version : String
+  cache_dir : String
 }
 
 ///|
@@ -45,6 +46,7 @@ pub fn default_config(root : String) -> ScanConfig {
     max_concurrency: 0,
     incremental: false,
     rulepack_version: "",
+    cache_dir: ".lunashield-cache",
   }
 }
 

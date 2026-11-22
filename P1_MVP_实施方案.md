@@ -136,7 +136,7 @@ TaskGroup::spawn(group, async () -> X, no_wait?, allow_failure?)
 | 6 | 根包 `moon.pkg` 的 import 不传递到子包 | 每个含代码的目录（含 `apps/scan`）都要写自己的 `moon.pkg` |
 | 7 | `async fn main` 必须在本包声明 `@async` 依赖 | `apps/scan/moon.pkg` 显式 import `moonbitlang/async` |
 | 8 | `moon cram test` 无参数发现 0 个用例且退出 0 | CI 必须 `moon cram test tests/cram/` 显式传目录 |
-| 9 | cram 每块是独立临时目录，块间不共享文件 | 用 `printf '...' > sample.js && scan.exe sample.js` 单表达式自建 fixture |
+| 9 | cram 的临时目录是**按文档**共享、不是按块隔离（M3 实测修正） | 每块仍用单表达式自建 fixture；会写固定文件名的块要么先 `rm -rf` 工作子目录，要么用唯一子目录 |
 | 10 | `abort` 退出码 127；cram 失败时自身退出码 50 | 业务退出码用 `@env.exit`；CI 用 cram 进程退出码判断 |
 
 ### 2.4 可直接复用的 P0 代码
@@ -589,7 +589,7 @@ scan <root> [options]
 3. **确定性来自"末尾统一排序"而非执行顺序**：并发任务把结果 push 进共享数组，随后 `scoring.finalize`（findings）与 `compare_warnings`（warnings）全量排序；`duration_ms` 恒填 0，避免时间戳破坏 diff。实测两次运行 `findings.json` `cmp` 相同。
 4. **stdlib 里没有可用整数解析**：`moonbitlang/core/strconv` 在该工具链构建下 `pkg.generated.mbti` **完全为空**（无 `parse_int`）。改为自写 `parse_uint(StringView)`，注意 `Char::to_uint().reinterpret_as_int()` 得到的是 ASCII 码，必须 `-48` —— 少了这一步曾让 `--shard 0/1` 变成 `48/49`，两个 shard 都扫出 0 个文件。
 5. **`moonbitlang/core/env` 无 `exit` 以外的坑；`@fs.write_file` 直接收 `String`**（`impl Data for String`），无需 `@utf8.encode`；报告文件写入时补尾部换行，否则 cram 报 `(no-eol)`。
-6. **cram 两个硬约束再次验证**：必须显式传目录 `moon cram test tests/cram/`（无参数 = 0 用例且退出 0）；每块独立临时目录，因此规则包用 `printf '%s' '[...]' > rules.json` 内联自建，fixture 与扫描命令必须写在同一条 shell 表达式里。
+6. **cram 两个硬约束再次验证**：必须显式传目录 `moon cram test tests/cram/`（无参数 = 0 用例且退出 0）；临时目录**按文档共享**（同一 .md 内的块共用 cwd，M3 阶段误记为按块隔离）；规则包仍用 `printf '%s' '[...]' > rules.json` 内联自建，需要干净环境的块先 `rm -rf` 自己的子目录。
 7. **shard 的正确验证方式**：不是"每个 shard 各自有结果"，而是 `0/n` 与 `1/n` 的 `files:` 计数之和等于全量、且 findings 集合互补。cram 用 `cat s0.txt s1.txt | grep "^files:"` 断言两行。
 8. **报告 DTO 而非直接序列化模型**：`report_dto` 把 `Severity` 映射成小写字符串、丢弃 `related`/内部字段，键顺序由 struct 声明固定；`render_junit` 手写 XML 并对 `& < > " '` 转义（5 类全部有测试）。
 

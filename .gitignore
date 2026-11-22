@@ -13,5 +13,8 @@ target/
 .DS_Store
 Thumbs.db
 
+# Incremental scan cache (default --cache-dir)
+.lunashield-cache/
+
 # Scratch dirs used by verification scripts
 .tmp-*/

@@ -11,7 +11,9 @@ fn usage() -> String {
   "  --fail-on <severity>  critical|high|medium|low|info|never (default: high)\n" +
   "  --shard <i>/<n>       scan only shard i of n\n" +
   "  --ignore <pattern>    extra ignore pattern (repeatable)\n" +
-  "  --max-concurrency <n> per-file concurrency (default: 4)\n"
+  "  --max-concurrency <n> per-file concurrency (default: 4)\n" +
+  "  --incremental         reuse per-file results from --cache-dir\n" +
+  "  --cache-dir <dir>     cache location (default: .lunashield-cache)\n"
 }
 
 ///|
@@ -156,6 +158,13 @@ async fn main {
       let value = arg_or_fail(args, i)
       ignore_patterns.push(value)
       i += 2
+    } else if arg == "--incremental" {
+      cfg = { ..cfg, incremental: true, }
+      i += 1
+    } else if arg == "--cache-dir" {
+      let value = arg_or_fail(args, i)
+      cfg = { ..cfg, cache_dir: value, }
+      i += 2
     } else if arg == "--max-concurrency" {
       let value = arg_or_fail(args, i)
       let n = match parse_uint(value.trim()) {
@@ -203,7 +212,14 @@ async fn main {
       Some(rep) => {
         let text = rep.render(outcome.result)
         match rep.file_name() {
-          None => println(text)
+          None => {
+            println(text)
+            if cfg.incremental && fmt == "console" {
+              println(
+                "cache: \{outcome.cache_hits} hit, \{outcome.cache_misses} miss",
+              )
+            }
+          }
           Some(name) =>
             if out_dir.length() > 0 {
               write_report(out_dir, name, text + "\n")

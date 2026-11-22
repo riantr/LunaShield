@@ -7,6 +7,7 @@ members = [
   "libs/parser",
   "libs/query-engine",
   "libs/scoring",
+  "libs/cache",
   "libs/report",
   "libs/orchestrator",
   "apps/scan",

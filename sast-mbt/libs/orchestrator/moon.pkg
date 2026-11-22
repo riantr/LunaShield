@@ -3,6 +3,7 @@ import {
   "moonbitlang/async/fs",
   "moonbitlang/async/semaphore",
   "moonbitlang/core/json",
+  "sast/cache",
   "sast/config",
   "sast/core-model" @core,
   "sast/lang-registry" @lang,

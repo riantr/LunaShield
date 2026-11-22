@@ -8,6 +8,7 @@ source = ""
 
 import {
   "moonbitlang/async@0.22.10",
+  "sast/cache@0.1.0",
   "sast/config@0.1.0",
   "sast/core-model@0.1.0",
   "sast/lang-registry@0.1.0",

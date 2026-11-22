@@ -10,20 +10,32 @@ pub suberror ScanError {
 }
 
 ///|
-/// Result of one scan plus the number of rules that were actually applied.
+/// Result of one scan plus bookkeeping the CLI prints (rule count, cache stats).
 pub(all) struct ScanOutcome {
   result : @core.ScanResult
   rule_count : Int32
+  cache_hits : Int32
+  cache_misses : Int32
 }
 
 ///|
 /// Per-file scan output. `skipped` is `Some("path (reason)")` when the file was
 /// deliberately not analyzed.
 priv struct FileScan {
-  hits : Array[@core.RawHit]
+  findings : Array[@core.Finding]
+  raw_hits : Int32
   warnings : Array[@core.ParseWarning]
   skipped : String?
   bytes : Int32
+  cache_hit : Bool
+}
+
+///|
+/// Everything `scan_one` needs to consult the incremental cache.
+priv struct CacheCtx {
+  dir : String
+  rules_digest : String
+  analyzer_version : String
 }
 
 ///|
@@ -36,9 +48,18 @@ fn rules_file(rules_path : String) -> String {
 }
 
 ///|
+/// A loaded rule pack: the enabled rules plus the digest used as a cache key
+/// component. The digest is over the raw file bytes, so editing a rule without
+/// bumping `manifest.json` still invalidates every cache entry.
+pub(all) struct RulePack {
+  rules : Array[@rule.Rule]
+  digest : String
+}
+
+///|
 /// Load and validate a rule pack. Accepts either a `rules.json` file or a
 /// directory containing one.
-pub async fn load_rules(rules_path : String) -> Array[@rule.Rule] {
+pub async fn load_rule_pack(rules_path : String) -> RulePack {
   let path = rules_file(rules_path)
   let text = @fs.read_file(path).text() catch {
     _ => raise ScanError(message="cannot read rules file: \{path}")
@@ -64,7 +85,13 @@ pub async fn load_rules(rules_path : String) -> Array[@rule.Rule] {
       enabled.push(r)
     }
   }
-  enabled
+  { rules: enabled, digest: @source-file.sha256_hex(text), }
+}
+
+///|
+/// Enabled rules only, for callers that do not need the cache digest.
+pub async fn load_rules(rules_path : String) -> Array[@rule.Rule] {
+  load_rule_pack(rules_path).rules
 }
 
 ///|
@@ -98,57 +125,129 @@ fn fs_path(root : String, rel : String) -> String {
 }
 
 ///|
-/// Scan one file: read, parse, run rules, drop suppressed hits.
+/// Full pipeline for one file: read, parse, run rules, drop suppressed hits,
+/// then (optionally) persist or reuse a cache entry.
 async fn scan_one(
   root : String,
   path : String,
   rules : Array[@rule.Rule],
   max_bytes : Int32,
+  cache : CacheCtx?,
 ) -> FileScan {
   match @source-file.read_source(fs_path(root, path), max_bytes) {
     @source-file.Skip(reason) =>
       {
-        hits: [],
+        findings: [],
+        raw_hits: 0,
         warnings: [],
         skipped: Some("\{path} (\{@source-file.skip_reason_name(reason)})"),
         bytes: 0,
+        cache_hit: false,
       }
     @source-file.Text(text) => {
       let spec = match @lang.spec_by_path(path) {
         Some(s) => s
         None =>
           return {
-            hits: [],
+            findings: [],
+            raw_hits: 0,
             warnings: [],
             skipped: Some("\{path} (unregistered-language)"),
             bytes: 0,
+            cache_hit: false,
           }
       }
-      let parsed = @parser.parse(spec, text, path)
-      let suppressions = @scoring.parse_suppressions(text)
-      let run = @query-engine.run_rules(parsed, rules)
-      let kept : Array[@core.RawHit] = []
-      for h in run.hits {
-        if !@scoring.is_hit_suppressed(suppressions, h.primary.line, h.rule_id) {
-          kept.push(h)
+      let bytes = @source-file.byte_len(text)
+      let ctx = match cache {
+        Some(c) => c
+        None => {
+          let fs = analyze(path, spec, text, rules, bytes)
+          return fs
         }
       }
-      let warnings = parsed.warnings
-      for fail in run.failures {
-        warnings.push({
+      // Cache lookups still read the file (the key is content-addressed); what
+      // they skip is parsing and Query execution, which dominate CPU time.
+      let content_hash = @source-file.sha256_hex(text)
+      let key = @cache.entry_key(
+        path,
+        content_hash,
+        ctx.rules_digest,
+        ctx.analyzer_version,
+      )
+      match
+        @cache.load(
+          ctx.dir,
+          key,
           path,
-          line: 1,
-          column: 1,
-          message: "rule \{fail.rule_id}: \{fail.message}",
-        })
-      }
-      {
-        hits: kept,
-        warnings,
-        skipped: None,
-        bytes: @source-file.byte_len(text),
+          content_hash,
+          ctx.rules_digest,
+          ctx.analyzer_version,
+        ) {
+        Some(entry) =>
+          {
+            findings: entry.findings.map(@cache.from_cached),
+            raw_hits: entry.raw_hits,
+            warnings: entry.warnings.map(@cache.warning_from_cached),
+            skipped: None,
+            bytes: entry.bytes,
+            cache_hit: true,
+          }
+        None => {
+          let fs = analyze(path, spec, text, rules, bytes)
+          @cache.save(
+            ctx.dir,
+            @cache.make_entry(
+              path,
+              content_hash,
+              ctx.rules_digest,
+              ctx.analyzer_version,
+              fs.bytes,
+              fs.raw_hits,
+              fs.findings,
+              fs.warnings,
+            ),
+          )
+          fs
+        }
       }
     }
+  }
+}
+
+///|
+/// Parse + query + suppress, without touching the cache.
+fn analyze(
+  path : String,
+  spec : @lang.LanguageSpec,
+  text : String,
+  rules : Array[@rule.Rule],
+  bytes : Int32,
+) -> FileScan {
+  let parsed = @parser.parse(spec, text, path)
+  let suppressions = @scoring.parse_suppressions(text)
+  let run = @query-engine.run_rules(parsed, rules)
+  let findings : Array[@core.Finding] = []
+  for h in run.hits {
+    if !@scoring.is_hit_suppressed(suppressions, h.primary.line, h.rule_id) {
+      findings.push(@scoring.finding_from_hit(h))
+    }
+  }
+  let warnings = parsed.warnings
+  for fail in run.failures {
+    warnings.push({
+      path,
+      line: 1,
+      column: 1,
+      message: "rule \{fail.rule_id}: \{fail.message}",
+    })
+  }
+  {
+    findings,
+    raw_hits: run.hits.length().to_int(),
+    warnings,
+    skipped: None,
+    bytes,
+    cache_hit: false,
   }
 }
 
@@ -194,12 +293,32 @@ fn effective_concurrency(requested : Int32) -> Int32 {
 /// Run a full scan. Files are discovered once, filtered by shard and language,
 /// then processed concurrently with a semaphore cap. Aggregation is sorted, so
 /// the output is identical across runs and across thread schedules.
-pub async fn scan(config : @config.ScanConfig) -> ScanOutcome {
-  let rules = load_rules(config.rules_path)
+///
+/// `analyzer_version` participates in the cache key so a new build never reuses
+/// results produced by different logic.
+pub async fn scan(
+  config : @config.ScanConfig,
+  analyzer_version? : String,
+) -> ScanOutcome {
+  let pack = load_rule_pack(config.rules_path)
+  let rules = pack.rules
   if rules.length() == 0 {
     raise ScanError(
       message="no enabled rules in \{rules_file(config.rules_path)}",
     )
+  }
+  let analyzer = match analyzer_version {
+    Some(v) => v
+    None => "0.1.0"
+  }
+  let cache : CacheCtx? = if config.incremental {
+    Some({
+      dir: config.cache_dir,
+      rules_digest: pack.digest,
+      analyzer_version: analyzer,
+    })
+  } else {
+    None
   }
   let extensions = extensions_for(config.langs)
   let discovered = @source-file.discover(
@@ -219,9 +338,7 @@ pub async fn scan(config : @config.ScanConfig) -> ScanOutcome {
     skipped.push("\{s.path} (\{@source-file.skip_reason_name(s.reason)})")
   }
 
-  let hits : Array[@core.RawHit] = []
-  let warnings : Array[@core.ParseWarning] = []
-  let sizes : Array[Int32] = []
+  let results : Array[FileScan] = []
   let sem = @semaphore.Semaphore(effective_concurrency(config.max_concurrency))
   @async.with_task_group <| group => {
     for path in files {
@@ -233,39 +350,55 @@ pub async fn scan(config : @config.ScanConfig) -> ScanOutcome {
           path,
           rules,
           @source-file.DEFAULT_MAX_BYTES,
+          cache,
         )
-        for h in fs.hits {
-          hits.push(h)
-        }
-        for w in fs.warnings {
-          warnings.push(w)
-        }
-        match fs.skipped {
-          Some(s) => skipped.push(s)
-          None => sizes.push(fs.bytes)
-        }
+        results.push(fs)
       })
     }
   }
 
+  let findings : Array[@core.Finding] = []
+  let warnings : Array[@core.ParseWarning] = []
+  let mut raw_hits : Int32 = 0
   let mut bytes_scanned : Int32 = 0
-  for n in sizes {
-    bytes_scanned += n
+  let mut scanned : Int32 = 0
+  let mut cache_hits : Int32 = 0
+  let mut cache_misses : Int32 = 0
+  for fs in results {
+    for f in fs.findings {
+      findings.push(f)
+    }
+    for w in fs.warnings {
+      warnings.push(w)
+    }
+    match fs.skipped {
+      Some(s) => skipped.push(s)
+      None => {
+        scanned += 1
+        bytes_scanned += fs.bytes
+        raw_hits += fs.raw_hits
+        if fs.cache_hit {
+          cache_hits += 1
+        } else {
+          cache_misses += 1
+        }
+      }
+    }
   }
   warnings.mut_view().sort_by(compare_warnings)
   skipped.sort_by_key(fn(s) { s })
-  let finalized = @scoring.finalize(hits)
+  let finalized = @scoring.finalize_findings(findings, raw_hits)
   let result : @core.ScanResult = {
     findings: finalized.findings,
     warnings,
     skipped_files: skipped,
     stats: {
-      files_scanned: sizes.length().to_int(),
+      files_scanned: scanned,
       files_skipped: skipped.length().to_int(),
       bytes_scanned,
       raw_hits: finalized.stats.raw_hits,
       duration_ms: 0,
     },
   }
-  { result, rule_count: rules.length(), }
+  { result, rule_count: rules.length(), cache_hits, cache_misses, }
 }
