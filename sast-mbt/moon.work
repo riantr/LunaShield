@@ -8,6 +8,7 @@ members = [
   "libs/query-engine",
   "libs/scoring",
   "libs/cache",
+  "libs/taint",
   "libs/report",
   "libs/orchestrator",
   "apps/scan",

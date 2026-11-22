@@ -1,0 +1,111 @@
+{
+  "version": "1.0.0",
+  "languages": [
+    {
+      "language": "javascript",
+      "sources": [
+        { "name": "http_query", "node_kind": "member_expression", "text_contains": "req.query" },
+        { "name": "http_body", "node_kind": "member_expression", "text_contains": "req.body" },
+        { "name": "http_params", "node_kind": "member_expression", "text_contains": "req.params" },
+        { "name": "url_query", "node_kind": "member_expression", "text_contains": "location.search" },
+        { "name": "argv", "node_kind": "member_expression", "text_contains": "process.argv" },
+        { "name": "cookie", "node_kind": "member_expression", "text_contains": "document.cookie" },
+        { "name": "window_name", "node_kind": "member_expression", "text_contains": "window.name" }
+      ],
+      "sanitizers": [
+        { "name": "escape_html", "callee_contains": "escapeHtml" },
+        { "name": "encode_uri", "callee_contains": "encodeURIComponent" },
+        { "name": "strict_int", "callee_contains": "parseInt" },
+        { "name": "validator", "callee_contains": "validator." },
+        { "name": "dom_purify", "callee_contains": "DOMPurify.sanitize" }
+      ],
+      "sinks": [
+        { "rule_id": "JS001", "capture": "arg" },
+        { "rule_id": "JS003", "capture": "val" },
+        { "rule_id": "JS004", "capture": "arg" },
+        { "rule_id": "JS005", "capture": "arg" },
+        { "rule_id": "JS010", "capture": "arg" }
+      ]
+    },
+    {
+      "language": "typescript",
+      "sources": [
+        { "name": "http_query", "node_kind": "member_expression", "text_contains": "req.query" },
+        { "name": "http_body", "node_kind": "member_expression", "text_contains": "req.body" },
+        { "name": "http_params", "node_kind": "member_expression", "text_contains": "req.params" },
+        { "name": "argv", "node_kind": "member_expression", "text_contains": "process.argv" }
+      ],
+      "sanitizers": [
+        { "name": "escape_html", "callee_contains": "escapeHtml" },
+        { "name": "encode_uri", "callee_contains": "encodeURIComponent" },
+        { "name": "strict_int", "callee_contains": "parseInt" },
+        { "name": "validator", "callee_contains": "validator." }
+      ],
+      "sinks": [
+        { "rule_id": "TS002", "capture": "arg" },
+        { "rule_id": "TS003", "capture": "arg" },
+        { "rule_id": "TS005", "capture": "val" }
+      ]
+    },
+    {
+      "language": "tsx",
+      "sources": [
+        { "name": "props", "node_kind": "member_expression", "text_contains": "props." },
+        { "name": "http_query", "node_kind": "member_expression", "text_contains": "req.query" }
+      ],
+      "sanitizers": [
+        { "name": "dom_purify", "callee_contains": "DOMPurify.sanitize" },
+        { "name": "escape_html", "callee_contains": "escapeHtml" }
+      ],
+      "sinks": [
+        { "rule_id": "TS007", "capture": "val" },
+        { "rule_id": "TS008", "capture": "arg" }
+      ]
+    },
+    {
+      "language": "python",
+      "sources": [
+        { "name": "request_args", "node_kind": "attribute", "text_contains": "request.args" },
+        { "name": "request_form", "node_kind": "attribute", "text_contains": "request.form" },
+        { "name": "request_get", "node_kind": "attribute", "text_contains": "request.GET" },
+        { "name": "request_post", "node_kind": "attribute", "text_contains": "request.POST" },
+        { "name": "argv", "node_kind": "attribute", "text_contains": "sys.argv" },
+        { "name": "stdin", "node_kind": "call", "text_contains": "input(" }
+      ],
+      "sanitizers": [
+        { "name": "html_escape", "callee_contains": "escape" },
+        { "name": "url_quote", "callee_contains": "quote" },
+        { "name": "strict_int", "callee_contains": "int(" },
+        { "name": "strict_float", "callee_contains": "float(" },
+        { "name": "bleach_clean", "callee_contains": "bleach.clean" }
+      ],
+      "sinks": [
+        { "rule_id": "PY001", "capture": "arg" },
+        { "rule_id": "PY002", "capture": "arg" },
+        { "rule_id": "PY005", "capture": "arg" },
+        { "rule_id": "PY006", "capture": "arg" }
+      ]
+    },
+    {
+      "language": "java",
+      "sources": [
+        { "name": "servlet_param", "node_kind": "method_invocation", "text_contains": "getParameter" },
+        { "name": "servlet_header", "node_kind": "method_invocation", "text_contains": "getHeader" },
+        { "name": "servlet_cookie", "node_kind": "method_invocation", "text_contains": "getCookies" },
+        { "name": "request_body", "node_kind": "method_invocation", "text_contains": "getInputStream" }
+      ],
+      "sanitizers": [
+        { "name": "owasp_html", "callee_contains": "encodeForHTML" },
+        { "name": "escape_html", "callee_contains": "escapeHtml" },
+        { "name": "strict_int", "callee_contains": "parseInt" },
+        { "name": "strict_value", "callee_contains": "Integer.valueOf" },
+        { "name": "prepared_statement", "callee_contains": "setString" }
+      ],
+      "sinks": [
+        { "rule_id": "JAVA001", "capture": "arg" },
+        { "rule_id": "JAVA002", "capture": "arg" },
+        { "rule_id": "JAVA007", "capture": "arg" }
+      ]
+    }
+  ]
+}
