@@ -8,6 +8,7 @@ fn hit(
 ) -> @core.RawHit {
   {
     rule_id,
+    language: "javascript",
     severity: @core.High,
     cwe: [95],
     owasp: ["A03:2021"],
@@ -15,6 +16,7 @@ fn hit(
     primary: { path, line, column, byte_offset: 0, },
     snippet,
     captures: Map([]),
+    taint: @core.NotApplicable,
   }
 }
 

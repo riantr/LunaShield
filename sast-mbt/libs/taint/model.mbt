@@ -60,34 +60,16 @@ pub(all) struct TaintSpec {
 }
 
 ///|
-/// Outcome of confirming one hit.
-///
-/// `Confirmed` is the only verdict that may raise `Finding.confidence` above the
-/// AST baseline; `Sanitized` / `NoSource` are pruning verdicts. `NotApplicable`
-/// means "no opinion" and must never change a finding — this is what the v0 stub
-/// returns, and what keeps an incomplete manifest from silently hiding defects.
-#derive(Debug, Eq)
-pub(all) enum TaintVerdict {
-  Confirmed
-  Sanitized
-  NoSource
-  NotApplicable
-}
-
-///|
-pub fn verdict_name(v : TaintVerdict) -> String {
-  match v {
-    Confirmed => "confirmed"
-    Sanitized => "sanitized"
-    NoSource => "no-source"
-    NotApplicable => "not-applicable"
-  }
+/// Alias kept for callers that only import `taint`; the enum itself lives in
+/// `core-model` because every `RawHit` carries one.
+pub fn verdict_name(v : @core.TaintVerdict) -> String {
+  @core.verdict_name(v)
 }
 
 ///|
 /// Verdict plus the locations that produced it (used by SARIF `codeFlows` in S5).
 pub(all) struct TaintResult {
-  verdict : TaintVerdict
+  verdict : @core.TaintVerdict
   source : @core.SourceLoc?
   sanitizer : @core.SourceLoc?
   /// Human-readable reason, kept stable for tests and future report fields.

@@ -45,11 +45,36 @@ pub(all) struct Finding {
 }
 
 ///|
+/// Verdict of the optional taint stage (P2). Lives in the model because it is
+/// carried on every `RawHit`; `libs/taint` only decides the value.
+#derive(Debug, Eq)
+pub(all) enum TaintVerdict {
+  Confirmed
+  Sanitized
+  NoSource
+  NotApplicable
+}
+
+///|
+/// Stable lowercase name, used in reports and tests.
+pub fn verdict_name(v : TaintVerdict) -> String {
+  match v {
+    Confirmed => "confirmed"
+    Sanitized => "sanitized"
+    NoSource => "no-source"
+    NotApplicable => "not-applicable"
+  }
+}
+
+///|
 /// A rule match that satisfied every predicate, produced by `query-engine` and
 /// consumed by `scoring`. Defined here so `scoring` can finish a Finding without
 /// depending on the execution layer.
 pub(all) struct RawHit {
   rule_id : String
+  /// Language key of the file the hit came from (`javascript`, ...), needed by
+  /// the taint stage to pick a manifest block.
+  language : String
   severity : Severity
   cwe : Array[Int32]
   owasp : Array[String]
@@ -57,6 +82,8 @@ pub(all) struct RawHit {
   primary : SourceLoc
   snippet : String
   captures : Map[String, String]
+  /// Taint verdict; `NotApplicable` until the taint stage runs (P2-S4b).
+  taint : TaintVerdict
 }
 
 ///|

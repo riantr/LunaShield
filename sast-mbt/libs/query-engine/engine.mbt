@@ -114,6 +114,7 @@ pub fn run_rules(
           if eval_predicates(rule.predicates, captures) {
             hits.push({
               rule_id: rule.id,
+              language: parsed.language,
               severity: rule.severity,
               cwe: rule.cwe,
               owasp: rule.owasp,
@@ -121,6 +122,7 @@ pub fn run_rules(
               primary: @parser.loc_of_node(parsed.path, node),
               snippet: @parser.text_of_node(node, parsed.source),
               captures,
+              taint: @core.NotApplicable,
             })
           }
       }

@@ -122,6 +122,9 @@ test "run_rules: one eval call produces one raw hit with P0-compatible location"
   assert_eq(result.hits.length(), 1)
   let hit = result.hits[0]
   assert_eq(hit.rule_id, "JS001")
+  // S4b: every hit carries its file language and starts with no taint opinion.
+  assert_eq(hit.language, "javascript")
+  assert_eq(hit.taint, @core.NotApplicable)
   assert_eq(hit.severity, @core.High)
   assert_eq(hit.primary.line, 2)
   assert_eq(hit.primary.column, 1)

@@ -28,10 +28,10 @@ test "spec: parses the documented schema" {
 
 ///|
 test "spec: verdict names are stable" {
-  assert_eq(@taint.verdict_name(@taint.Confirmed), "confirmed")
-  assert_eq(@taint.verdict_name(@taint.Sanitized), "sanitized")
-  assert_eq(@taint.verdict_name(@taint.NoSource), "no-source")
-  assert_eq(@taint.verdict_name(@taint.NotApplicable), "not-applicable")
+  assert_eq(@taint.verdict_name(@core.Confirmed), "confirmed")
+  assert_eq(@taint.verdict_name(@core.Sanitized), "sanitized")
+  assert_eq(@taint.verdict_name(@core.NoSource), "no-source")
+  assert_eq(@taint.verdict_name(@core.NotApplicable), "not-applicable")
 }
 
 ///|
@@ -103,6 +103,7 @@ test "analyze: unimplemented analysis never has an opinion" {
   )
   let hit : @core.RawHit = {
     rule_id: "JS001",
+    language: "javascript",
     severity: @core.High,
     cwe: [95],
     owasp: ["A03:2021"],
@@ -110,14 +111,16 @@ test "analyze: unimplemented analysis never has an opinion" {
     primary: { path: "a.js", line: 1, column: 1, byte_offset: 0, },
     snippet: "eval",
     captures: Map([]),
+    taint: @core.NotApplicable,
   }
   let result = @taint.analyze(parsed, hit, lang)
-  assert_eq(result.verdict, @taint.NotApplicable)
+  assert_eq(result.verdict, @core.NotApplicable)
   assert_true(result.detail.contains("not implemented"))
   assert_true(result.source is None)
   // A rule that is not declared as a sink is also no-opinion, with a different reason.
   let other : @core.RawHit = {
     rule_id: "JS999",
+    language: "javascript",
     severity: @core.High,
     cwe: [],
     owasp: [],
@@ -125,9 +128,10 @@ test "analyze: unimplemented analysis never has an opinion" {
     primary: { path: "a.js", line: 1, column: 1, byte_offset: 0, },
     snippet: "x",
     captures: Map([]),
+    taint: @core.NotApplicable,
   }
   let other_result = @taint.analyze(parsed, other, lang)
-  assert_eq(other_result.verdict, @taint.NotApplicable)
+  assert_eq(other_result.verdict, @core.NotApplicable)
   assert_true(other_result.detail.contains("not a taint sink"))
 }
 
