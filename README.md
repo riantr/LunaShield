@@ -39,8 +39,9 @@ P1_MVP_实施方案.md                      MVP 实施方案与逐里程碑实�
 
 ## CI
 
-GitHub Actions（`.github/workflows/ci.yml`）在 ubuntu-latest 与 windows-latest 上运行同一
-`scripts/verify.sh`，工具链经 `moonup` 锁定 `0.10.21+06da1ed44`。
+`.github/workflows/ci.yml` 定义了 ubuntu-latest 与 windows-latest 双平台矩阵，
+运行同一 `scripts/verify.sh`，工具链经 `moonup` 锁定 `0.10.21+06da1ed44`。
+（当前仓库托管在 Gitee；托管到 GitHub 时该工作流即可生效。）
 
 ## 许可证
 
