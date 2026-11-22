@@ -53,3 +53,12 @@ findings: 0 (critical 0, high 0, medium 0, low 0, info 0)
 warnings: 1
 a.js:1:1 syntax error
 ```
+
+## SARIF report keeps rule id, level and fingerprint
+
+```mooncram
+$ mkdir -p src && printf '%s' '[{"id":"JS001","language":"javascript","severity":"high","cwe":[95],"owasp":["A03:2021"],"query":"(call_expression function: (identifier) @callee arguments: (arguments . (_) @arg)) @call","predicates":[{"kind":"text_equals","capture":"callee","value":"eval"},{"kind":"not_has_prefix","capture":"arg","value":"\""}],"message":"Dynamic code execution via eval()","enabled":true}]' > rules.json && printf 'eval(userInput);\n' > src/a.js && (scan.exe src --rules rules.json --format sarif --out out > /dev/null; grep -o '"ruleId":"JS001"' out/findings.sarif; grep -o '"level":"error"' out/findings.sarif; grep -o '"startLine":1' out/findings.sarif)
+"ruleId":"JS001"
+"level":"error"
+"startLine":1
+```

@@ -9,7 +9,7 @@ LunaShield（原研究代号 sast-mbt）是一个用 MoonBit 编写的源代码�
 - **50 条内置规则**（`rulepacks/official/`）：注入、XSS、硬编码密钥、反序列化、弱加密、配置缺陷等
 - **宿主谓词白名单**（8 种，固定集合，规则不可执行任意代码）+ tree-sitter 原生谓词
 - **确定性输出**：结果排序键覆盖全部字段、无时间戳、路径统一相对 POSIX，同输入两次运行逐字节相同
-- **三种报告**：Console / JSON / JUnit（`findings.json`、`junit.xml`）
+- **四种报告**：Console / JSON / JUnit / SARIF 2.1.0（`findings.json`、`junit.xml`、`findings.sarif`）
 - **容错**：语法错误产出 ParseWarning 不中断扫描；二进制/超大/非法 UTF-8 文件分类跳过
 - **抑制语法**：`// sast-ignore`、`// sast-ignore-next-line`、`// sast-ignore: JS001,JS003`
 - **分片**：`--shard i/n`（FNV-1a over UTF-8，跨平台一致）
@@ -35,6 +35,7 @@ sast-mbt/            MVP 工程主体（libs/* + apps/scan + apps/rules-validate
 p0-spike/            P0 技术验证 spike（grammar 兼容、并发、缓存、端到端）
 MoonBit_SAST_核心功能设计与实现规划.md   主规划
 P1_MVP_实施方案.md                      MVP 实施方案与逐里程碑实测记录
+P2_路线与实测.md                        P2（SARIF/Reporter/增量/污点）步骤与实测
 ```
 
 ## CI

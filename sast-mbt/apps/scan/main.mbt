@@ -6,7 +6,7 @@ fn usage() -> String {
   "usage: scan <root> [options]\n" +
   "  --lang <csv>          languages to scan (default: all)\n" +
   "  --rules <path>        rule pack directory or rules.json (default: rulepacks/official)\n" +
-  "  --format <csv>        console,json,junit (default: console,json)\n" +
+  "  --format <csv>        console,json,junit,sarif (default: console,json)\n" +
   "  --out <dir>           write reports into dir instead of stdout\n" +
   "  --fail-on <severity>  critical|high|medium|low|info|never (default: high)\n" +
   "  --shard <i>/<n>       scan only shard i of n\n" +
@@ -117,8 +117,8 @@ async fn main {
       let value = arg_or_fail(args, i)
       let formats = split_csv(value)
       for f in formats {
-        guard one_of(f, ["console", "json", "junit"]) else {
-          fail("unknown format '\{f}', expected console,json,junit")
+        guard one_of(f, ["console", "json", "junit", "sarif"]) else {
+          fail("unknown format '\{f}', expected console,json,junit,sarif")
         }
       }
       cfg = { ..cfg, formats, }
@@ -202,6 +202,14 @@ async fn main {
       write_report(out_dir, "junit.xml", junit + "\n")
     } else {
       println(junit)
+    }
+  }
+  if one_of("sarif", cfg.formats) {
+    let sarif = @report.render_sarif(outcome.result)
+    if out_dir.length() > 0 {
+      write_report(out_dir, "findings.sarif", sarif + "\n")
+    } else {
+      println(sarif)
     }
   }
 
