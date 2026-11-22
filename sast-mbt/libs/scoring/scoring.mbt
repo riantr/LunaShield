@@ -147,12 +147,56 @@ fn compare_findings(a : @core.Finding, b : @core.Finding) -> Int32 {
 }
 
 ///|
-/// Convert one raw hit into a finding (fingerprint computed here).
+/// Confidence implied by the optional taint verdict (P2-S4b).
+///
+/// - `NotApplicable` (taint off / not configured / rule not a sink) and
+///   `Confirmed` keep the AST baseline `High`.
+/// - `Sanitized` / `NoSource` are refuted flows, downgraded to `Low`.
+///
+/// Keeping `NotApplicable` at `High` is the safety invariant: before taint is
+/// wired into the scan every hit is `NotApplicable`, so output is byte-for-byte
+/// identical to the pre-taint analyzer.
+pub fn confidence_from_taint(v : @core.TaintVerdict) -> @core.Confidence {
+  match v {
+    NotApplicable => @core.High
+    Confirmed => @core.High
+    Sanitized => @core.Low
+    NoSource => @core.Low
+  }
+}
+
+///|
+/// A verdict that a strict-mode scan prunes. `NotApplicable` is never weak:
+/// absence of taint evidence must not remove a finding.
+pub fn is_weak_verdict(v : @core.TaintVerdict) -> Bool {
+  match v {
+    Sanitized => true
+    NoSource => true
+    _ => false
+  }
+}
+
+///|
+/// Drop hits refuted by taint, for the `--taint strict` gate. Provided here as
+/// a pure function so the pipeline decides *whether* to apply it while scoring
+/// owns *what* counts as weak. With all hits `NotApplicable` this is identity.
+pub fn prune_by_taint(hits : Array[@core.RawHit]) -> Array[@core.RawHit] {
+  let kept : Array[@core.RawHit] = []
+  for h in hits {
+    if !is_weak_verdict(h.taint) {
+      kept.push(h)
+    }
+  }
+  kept
+}
+
+///|
+/// Convert one raw hit into a finding (fingerprint and confidence computed here).
 pub fn finding_from_hit(h : @core.RawHit) -> @core.Finding {
   {
     rule_id: h.rule_id,
     severity: h.severity,
-    confidence: @core.High,
+    confidence: confidence_from_taint(h.taint),
     cwe: h.cwe,
     owasp: h.owasp,
     primary: h.primary,

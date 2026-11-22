@@ -8,7 +8,9 @@
 // when `manifest.json` forgets a version bump.
 
 ///|
-pub const CACHE_SCHEMA : Int32 = 1
+/// Bumped to 2 in S4b-3: cached findings now carry `confidence`, so entries
+/// written by the earlier schema would replay the old "always High" default.
+pub const CACHE_SCHEMA : Int32 = 2
 
 ///|
 pub const CACHE_FILE_SUFFIX : String = ".json"
@@ -18,6 +20,8 @@ pub const CACHE_FILE_SUFFIX : String = ".json"
 pub(all) struct CachedFinding {
   rule_id : String
   severity : String
+  /// Lowercase confidence name; absent/unknown values fall back to High on load.
+  confidence : String
   cwe : Array[Int32]
   owasp : Array[String]
   message : String
@@ -87,6 +91,7 @@ pub fn to_cached(f : @core.Finding) -> CachedFinding {
   {
     rule_id: f.rule_id,
     severity: @core.severity_name(f.severity),
+    confidence: @core.confidence_name(f.confidence),
     cwe: f.cwe,
     owasp: f.owasp,
     message: f.message,
@@ -107,7 +112,10 @@ pub fn from_cached(c : CachedFinding) -> @core.Finding {
       Some(s) => s
       None => @core.High
     },
-    confidence: @core.High,
+    confidence: match @core.confidence_from_string(c.confidence) {
+      Some(v) => v
+      None => @core.High
+    },
     cwe: c.cwe,
     owasp: c.owasp,
     primary: {

@@ -163,13 +163,29 @@ pub impl @json.ToJson for Severity with fn to_json(self) -> @json.Json {
 }
 
 ///|
+/// Parse a lowercase confidence string from config/report/cached JSON.
+/// `None` for unknown values so callers can fall back deliberately.
+pub fn confidence_from_string(s : String) -> Confidence? {
+  match s {
+    "high" => Some(High)
+    "medium" => Some(Medium)
+    "low" => Some(Low)
+    _ => None
+  }
+}
+
+///|
+/// Stable lowercase name used in reports and cached entries.
+pub fn confidence_name(c : Confidence) -> String {
+  match c {
+    High => "high"
+    Medium => "medium"
+    Low => "low"
+  }
+}
+
+///|
 /// Stable lowercase serialization for Confidence.
 pub impl @json.ToJson for Confidence with fn to_json(self) -> @json.Json {
-  @json.Json::string(
-    match self {
-      High => "high"
-      Medium => "medium"
-      Low => "low"
-    },
-  )
+  @json.Json::string(confidence_name(self))
 }
