@@ -91,33 +91,38 @@ test "validate: rejects duplicate source names inside a language" {
 }
 
 ///|
-test "analyze: unimplemented analysis never has an opinion" {
-  let lang = @taint.for_language(
-    parse_or_abort(sample_spec_json()),
-    "javascript",
-  ).unwrap()
-  let parsed = @parser.parse(
-    @parser.spec_for_language("javascript").unwrap(),
-    "eval(userInput);\n",
-    "a.js",
-  )
-  let hit : @core.RawHit = {
+/// Build a synthetic RawHit the way query-engine would: `offset` points at the
+/// smallest-index capture (the callee), `arg` is the sink capture text.
+fn make_hit(arg : String, offset : Int32) -> @core.RawHit {
+  let caps : Map[String, String] = Map([])
+  caps.set("arg", arg)
+  {
     rule_id: "JS001",
     language: "javascript",
     severity: @core.High,
     cwe: [95],
     owasp: ["A03:2021"],
     message: "m",
-    primary: { path: "a.js", line: 1, column: 1, byte_offset: 0, },
+    primary: { path: "a.js", line: 1, column: 1, byte_offset: offset, },
     snippet: "eval",
-    captures: Map([]),
+    captures: caps,
     taint: @core.NotApplicable,
   }
-  let result = @taint.analyze(parsed, hit, lang)
-  assert_eq(result.verdict, @core.NotApplicable)
-  assert_true(result.detail.contains("not implemented"))
-  assert_true(result.source is None)
-  // A rule that is not declared as a sink is also no-opinion, with a different reason.
+}
+
+///|
+fn js_lang() -> @taint.LanguageTaint {
+  @taint.for_language(parse_or_abort(sample_spec_json()), "javascript").unwrap()
+}
+
+///|
+test "analyze: a rule that is not a sink is no-opinion" {
+  let lang = js_lang()
+  let parsed = @parser.parse(
+    @parser.spec_for_language("javascript").unwrap(),
+    "eval(req.query.x);\n",
+    "a.js",
+  )
   let other : @core.RawHit = {
     rule_id: "JS999",
     language: "javascript",
@@ -130,9 +135,104 @@ test "analyze: unimplemented analysis never has an opinion" {
     captures: Map([]),
     taint: @core.NotApplicable,
   }
-  let other_result = @taint.analyze(parsed, other, lang)
-  assert_eq(other_result.verdict, @core.NotApplicable)
-  assert_true(other_result.detail.contains("not a taint sink"))
+  let result = @taint.analyze(parsed, other, lang)
+  assert_eq(result.verdict, @core.NotApplicable)
+  assert_true(result.detail.contains("not a taint sink"))
+  assert_true(result.source is None)
+}
+
+///|
+test "analyze: direct source reaches sink -> Confirmed" {
+  let parsed = @parser.parse(
+    @parser.spec_for_language("javascript").unwrap(),
+    "function f(req) { eval(req.query.x); }\n",
+    "a.js",
+  )
+  // `eval` starts at byte 18 ("function f(req) { ").
+  let result = @taint.analyze(parsed, make_hit("req.query.x", 18), js_lang())
+  assert_eq(result.verdict, @core.Confirmed)
+  assert_true(result.detail.contains("source 'http_query' reaches"))
+  assert_true(result.source is Some(_))
+  assert_true(result.sanitizer is None)
+}
+
+///|
+test "analyze: sanitizer wrapping the source -> Sanitized" {
+  let parsed = @parser.parse(
+    @parser.spec_for_language("javascript").unwrap(),
+    "function f(req) { eval(escapeHtml(req.query.x)); }\n",
+    "a.js",
+  )
+  let result = @taint.analyze(
+    parsed,
+    make_hit("escapeHtml(req.query.x)", 18),
+    js_lang(),
+  )
+  assert_eq(result.verdict, @core.Sanitized)
+  assert_true(result.detail.contains("sanitizer 'escape_html' neutralizes"))
+  assert_true(result.source is Some(_))
+  assert_true(result.sanitizer is Some(_))
+}
+
+///|
+test "analyze: sanitizer after a bound source -> Sanitized" {
+  let parsed = @parser.parse(
+    @parser.spec_for_language("javascript").unwrap(),
+    "function f(req) { const x = req.query.q; eval(escapeHtml(x)); }\n",
+    "a.js",
+  )
+  // `eval` starts at byte 43.
+  let result = @taint.analyze(parsed, make_hit("escapeHtml(x)", 43), js_lang())
+  assert_eq(result.verdict, @core.Sanitized)
+  assert_true(result.sanitizer is Some(_))
+}
+
+///|
+test "analyze: no source in the function -> NoSource" {
+  let parsed = @parser.parse(
+    @parser.spec_for_language("javascript").unwrap(),
+    "function f() { eval(literal); }\n",
+    "a.js",
+  )
+  let result = @taint.analyze(parsed, make_hit("literal", 15), js_lang())
+  assert_eq(result.verdict, @core.NoSource)
+  assert_true(result.detail.contains("no taint source reaches"))
+  assert_true(result.source is None)
+}
+
+///|
+test "analyze: source unrelated to the sink argument -> NoSource" {
+  let parsed = @parser.parse(
+    @parser.spec_for_language("javascript").unwrap(),
+    "function f(req) { let y = req.query.x; eval(literal); }\n",
+    "a.js",
+  )
+  let result = @taint.analyze(parsed, make_hit("literal", 42), js_lang())
+  assert_eq(result.verdict, @core.NoSource)
+}
+
+///|
+test "analyze_with_spec: unconfigured language is no-opinion" {
+  let parsed = @parser.parse(
+    @parser.spec_for_language("javascript").unwrap(),
+    "eval(req.query.x);\n",
+    "a.js",
+  )
+  let result = @taint.analyze_with_spec(
+    parsed,
+    make_hit("req.query.x", 0),
+    parse_or_abort(sample_spec_json()),
+  )
+  // sample spec configures javascript, so this one DOES have an opinion.
+  assert_eq(result.verdict, @core.Confirmed)
+  let empty_spec = parse_or_abort("{\"version\":\"1.0.0\",\"languages\":[]}")
+  let none = @taint.analyze_with_spec(
+    parsed,
+    make_hit("req.query.x", 0),
+    empty_spec,
+  )
+  assert_eq(none.verdict, @core.NotApplicable)
+  assert_true(none.detail.contains("no taint configuration"))
 }
 
 ///|

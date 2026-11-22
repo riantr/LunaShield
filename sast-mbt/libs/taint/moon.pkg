@@ -1,4 +1,5 @@
 import {
+  "moonbit-community/treesitter",
   "moonbitlang/async",
   "moonbitlang/async/fs",
   "moonbitlang/core/json",
