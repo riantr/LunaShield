@@ -1,0 +1,4 @@
+{
+  "vaultRef": "vault:svc/credential",
+  "name": "svc"
+}

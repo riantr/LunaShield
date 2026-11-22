@@ -1,0 +1,6 @@
+import {
+  "sast/core-model" @core,
+  "sast/lang-registry" @lang,
+  "moonbit-community/treesitter",
+  "moonbitlang/core/encoding/utf8",
+}

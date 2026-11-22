@@ -1,0 +1,5 @@
+// import {
+//   "riantr/t5-concurrency" @lib,
+// }
+
+pkgtype(kind: "executable")

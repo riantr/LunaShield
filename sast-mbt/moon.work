@@ -1,0 +1,15 @@
+members = [
+  "libs/core-model",
+  "libs/rule",
+  "libs/config",
+  "libs/source-file",
+  "libs/lang-registry",
+  "libs/parser",
+  "libs/query-engine",
+  "libs/scoring",
+  "libs/report",
+  "libs/orchestrator",
+  "apps/scan",
+  "apps/rules-validate",
+  "tests/integration",
+]

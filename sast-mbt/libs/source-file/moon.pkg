@@ -1,0 +1,8 @@
+import {
+  "sast/core-model" @core,
+  "moonbitlang/async",
+  "moonbitlang/async/fs",
+  "mizchi/bit_hash" @bithash,
+  "mizchi/bit_ignore" @bitignore,
+  "moonbitlang/core/encoding/utf8",
+}

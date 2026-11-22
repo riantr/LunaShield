@@ -1,0 +1,5 @@
+// import {
+//   "riantr/t11-t12-grammar" @lib,
+// }
+
+pkgtype(kind: "executable")

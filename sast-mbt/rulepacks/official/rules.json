@@ -1,0 +1,1201 @@
+[
+  {
+    "id": "JS001",
+    "language": "javascript",
+    "severity": "high",
+    "cwe": [
+      95
+    ],
+    "owasp": [
+      "A03:2021"
+    ],
+    "query": "(call_expression function: (identifier) @callee arguments: (arguments . (_) @arg)) @call",
+    "predicates": [
+      {
+        "kind": "text_equals",
+        "capture": "callee",
+        "value": "eval"
+      },
+      {
+        "kind": "not_has_prefix",
+        "capture": "arg",
+        "value": "\""
+      }
+    ],
+    "message": "Dynamic code execution via eval()",
+    "enabled": true
+  },
+  {
+    "id": "JS002",
+    "language": "javascript",
+    "severity": "high",
+    "cwe": [
+      95
+    ],
+    "owasp": [
+      "A03:2021"
+    ],
+    "query": "(new_expression constructor: (identifier) @ctor arguments: (arguments . (_) @arg)) @call",
+    "predicates": [
+      {
+        "kind": "text_equals",
+        "capture": "ctor",
+        "value": "Function"
+      },
+      {
+        "kind": "not_has_prefix",
+        "capture": "arg",
+        "value": "\""
+      }
+    ],
+    "message": "Dynamic code execution via new Function()",
+    "enabled": true
+  },
+  {
+    "id": "JS003",
+    "language": "javascript",
+    "severity": "high",
+    "cwe": [
+      79
+    ],
+    "owasp": [
+      "A03:2021"
+    ],
+    "query": "(assignment_expression left: (member_expression property: (property_identifier) @prop) right: (_) @val) @assign",
+    "predicates": [
+      {
+        "kind": "text_equals",
+        "capture": "prop",
+        "value": "innerHTML"
+      },
+      {
+        "kind": "not_has_prefix",
+        "capture": "val",
+        "value": "\""
+      }
+    ],
+    "message": "DOM XSS via innerHTML assignment",
+    "enabled": true
+  },
+  {
+    "id": "JS004",
+    "language": "javascript",
+    "severity": "high",
+    "cwe": [
+      78
+    ],
+    "owasp": [
+      "A03:2021"
+    ],
+    "query": "(call_expression function: (member_expression object: (identifier) @obj property: (property_identifier) @prop) arguments: (arguments . (_) @arg)) @call",
+    "predicates": [
+      {
+        "kind": "text_equals",
+        "capture": "prop",
+        "value": "exec"
+      },
+      {
+        "kind": "contains",
+        "capture": "arg",
+        "value": "+"
+      }
+    ],
+    "message": "Command injection via exec() with concatenation",
+    "enabled": true
+  },
+  {
+    "id": "JS005",
+    "language": "javascript",
+    "severity": "high",
+    "cwe": [
+      89
+    ],
+    "owasp": [
+      "A03:2021"
+    ],
+    "query": "(call_expression function: (member_expression object: (identifier) @obj property: (property_identifier) @prop) arguments: (arguments . (_) @arg)) @call",
+    "predicates": [
+      {
+        "kind": "text_equals",
+        "capture": "prop",
+        "value": "query"
+      },
+      {
+        "kind": "contains",
+        "capture": "arg",
+        "value": "+"
+      }
+    ],
+    "message": "SQL injection via query() with concatenation",
+    "enabled": true
+  },
+  {
+    "id": "JS006",
+    "language": "javascript",
+    "severity": "high",
+    "cwe": [
+      798
+    ],
+    "owasp": [
+      "A02:2021"
+    ],
+    "query": "(variable_declarator name: (identifier) @name value: (string) @val) @decl",
+    "predicates": [
+      {
+        "kind": "text_equals",
+        "capture": "name",
+        "value": "apiKey"
+      }
+    ],
+    "message": "Hardcoded API key",
+    "enabled": true
+  },
+  {
+    "id": "JS007",
+    "language": "javascript",
+    "severity": "high",
+    "cwe": [
+      502
+    ],
+    "owasp": [
+      "A08:2021"
+    ],
+    "query": "(call_expression function: (member_expression object: (identifier) @obj property: (property_identifier) @prop)) @call",
+    "predicates": [
+      {
+        "kind": "text_equals",
+        "capture": "obj",
+        "value": "yaml"
+      },
+      {
+        "kind": "text_equals",
+        "capture": "prop",
+        "value": "load"
+      }
+    ],
+    "message": "Unsafe YAML deserialization",
+    "enabled": true
+  },
+  {
+    "id": "JS008",
+    "language": "javascript",
+    "severity": "medium",
+    "cwe": [
+      338
+    ],
+    "owasp": [
+      "A02:2021"
+    ],
+    "query": "(call_expression function: (member_expression object: (identifier) @obj property: (property_identifier) @prop)) @call",
+    "predicates": [
+      {
+        "kind": "text_equals",
+        "capture": "obj",
+        "value": "Math"
+      },
+      {
+        "kind": "text_equals",
+        "capture": "prop",
+        "value": "random"
+      }
+    ],
+    "message": "Weak randomness for security-sensitive value",
+    "enabled": true
+  },
+  {
+    "id": "JS009",
+    "language": "javascript",
+    "severity": "medium",
+    "cwe": [
+      1004
+    ],
+    "owasp": [
+      "A05:2021"
+    ],
+    "query": "(assignment_expression left: (member_expression property: (property_identifier) @prop) right: (_) @val) @assign",
+    "predicates": [
+      {
+        "kind": "text_equals",
+        "capture": "prop",
+        "value": "cookie"
+      },
+      {
+        "kind": "not_contains",
+        "capture": "val",
+        "value": "HttpOnly"
+      }
+    ],
+    "message": "Cookie set without HttpOnly",
+    "enabled": true
+  },
+  {
+    "id": "JS010",
+    "language": "javascript",
+    "severity": "high",
+    "cwe": [
+      22
+    ],
+    "owasp": [
+      "A01:2021"
+    ],
+    "query": "(call_expression function: (member_expression object: (identifier) @obj property: (property_identifier) @prop) arguments: (arguments . (_) @arg)) @call",
+    "predicates": [
+      {
+        "kind": "text_equals",
+        "capture": "obj",
+        "value": "fs"
+      },
+      {
+        "kind": "text_equals",
+        "capture": "prop",
+        "value": "readFile"
+      },
+      {
+        "kind": "not_has_prefix",
+        "capture": "arg",
+        "value": "\""
+      }
+    ],
+    "message": "Path traversal via fs.readFile() with user input",
+    "enabled": true
+  },
+  {
+    "id": "TS001",
+    "language": "typescript",
+    "severity": "medium",
+    "cwe": [
+      704
+    ],
+    "owasp": [
+      "A03:2021"
+    ],
+    "query": "(as_expression (predefined_type) @t) @cast",
+    "predicates": [
+      {
+        "kind": "text_equals",
+        "capture": "t",
+        "value": "any"
+      }
+    ],
+    "message": "Type safety bypassed with 'as any'",
+    "enabled": true
+  },
+  {
+    "id": "TS002",
+    "language": "typescript",
+    "severity": "high",
+    "cwe": [
+      95
+    ],
+    "owasp": [
+      "A03:2021"
+    ],
+    "query": "(call_expression function: (identifier) @callee arguments: (arguments . (_) @arg)) @call",
+    "predicates": [
+      {
+        "kind": "text_equals",
+        "capture": "callee",
+        "value": "eval"
+      },
+      {
+        "kind": "not_has_prefix",
+        "capture": "arg",
+        "value": "\""
+      }
+    ],
+    "message": "Dynamic code execution via eval() in TypeScript",
+    "enabled": true
+  },
+  {
+    "id": "TS003",
+    "language": "typescript",
+    "severity": "high",
+    "cwe": [
+      78
+    ],
+    "owasp": [
+      "A03:2021"
+    ],
+    "query": "(call_expression function: (member_expression object: (identifier) @obj property: (property_identifier) @prop) arguments: (arguments . (_) @arg)) @call",
+    "predicates": [
+      {
+        "kind": "text_equals",
+        "capture": "prop",
+        "value": "exec"
+      },
+      {
+        "kind": "not_has_prefix",
+        "capture": "arg",
+        "value": "\""
+      }
+    ],
+    "message": "Command execution with unvalidated argument",
+    "enabled": true
+  },
+  {
+    "id": "TS004",
+    "language": "typescript",
+    "severity": "high",
+    "cwe": [
+      798
+    ],
+    "owasp": [
+      "A02:2021"
+    ],
+    "query": "(variable_declarator name: (identifier) @name value: (string) @val) @decl",
+    "predicates": [
+      {
+        "kind": "text_equals",
+        "capture": "name",
+        "value": "secretToken"
+      }
+    ],
+    "message": "Hardcoded secret token",
+    "enabled": true
+  },
+  {
+    "id": "TS005",
+    "language": "typescript",
+    "severity": "high",
+    "cwe": [
+      79
+    ],
+    "owasp": [
+      "A03:2021"
+    ],
+    "query": "(assignment_expression left: (member_expression property: (property_identifier) @prop) right: (_) @val) @assign",
+    "predicates": [
+      {
+        "kind": "text_equals",
+        "capture": "prop",
+        "value": "innerHTML"
+      },
+      {
+        "kind": "not_has_prefix",
+        "capture": "val",
+        "value": "\""
+      }
+    ],
+    "message": "DOM XSS via innerHTML in TypeScript",
+    "enabled": true
+  },
+  {
+    "id": "TS006",
+    "language": "tsx",
+    "severity": "high",
+    "cwe": [
+      79
+    ],
+    "owasp": [
+      "A03:2021"
+    ],
+    "query": "(jsx_attribute (property_identifier) @name) @attr",
+    "predicates": [
+      {
+        "kind": "text_equals",
+        "capture": "name",
+        "value": "dangerouslySetInnerHTML"
+      }
+    ],
+    "message": "React dangerouslySetInnerHTML with untrusted markup",
+    "enabled": true
+  },
+  {
+    "id": "TS007",
+    "language": "tsx",
+    "severity": "high",
+    "cwe": [
+      79
+    ],
+    "owasp": [
+      "A03:2021"
+    ],
+    "query": "(jsx_attribute (property_identifier) @name (string) @val) @attr",
+    "predicates": [
+      {
+        "kind": "text_equals",
+        "capture": "name",
+        "value": "href"
+      },
+      {
+        "kind": "contains",
+        "capture": "val",
+        "value": "javascript:"
+      }
+    ],
+    "message": "javascript: URL in JSX attribute",
+    "enabled": true
+  },
+  {
+    "id": "TS008",
+    "language": "tsx",
+    "severity": "high",
+    "cwe": [
+      95
+    ],
+    "owasp": [
+      "A03:2021"
+    ],
+    "query": "(call_expression function: (identifier) @callee arguments: (arguments . (_) @arg)) @call",
+    "predicates": [
+      {
+        "kind": "text_equals",
+        "capture": "callee",
+        "value": "eval"
+      },
+      {
+        "kind": "not_has_prefix",
+        "capture": "arg",
+        "value": "\""
+      }
+    ],
+    "message": "Dynamic code execution via eval() in TSX",
+    "enabled": true
+  },
+  {
+    "id": "TS009",
+    "language": "tsx",
+    "severity": "medium",
+    "cwe": [
+      1021
+    ],
+    "owasp": [
+      "A04:2021"
+    ],
+    "query": "(jsx_attribute (property_identifier) @name (string) @val) @attr",
+    "predicates": [
+      {
+        "kind": "text_equals",
+        "capture": "name",
+        "value": "target"
+      },
+      {
+        "kind": "contains",
+        "capture": "val",
+        "value": "_blank"
+      }
+    ],
+    "message": "target=_blank without rel=noopener",
+    "enabled": true
+  },
+  {
+    "id": "TS010",
+    "language": "tsx",
+    "severity": "high",
+    "cwe": [
+      79
+    ],
+    "owasp": [
+      "A03:2021"
+    ],
+    "query": "(jsx_attribute (property_identifier) @name) @attr",
+    "predicates": [
+      {
+        "kind": "text_equals",
+        "capture": "name",
+        "value": "onClick"
+      }
+    ],
+    "message": "Inline handler attribute receives raw payload",
+    "enabled": true
+  },
+  {
+    "id": "PY001",
+    "language": "python",
+    "severity": "high",
+    "cwe": [
+      95
+    ],
+    "owasp": [
+      "A03:2021"
+    ],
+    "query": "(call function: (identifier) @callee arguments: (argument_list . (_) @arg)) @call",
+    "predicates": [
+      {
+        "kind": "text_equals",
+        "capture": "callee",
+        "value": "eval"
+      },
+      {
+        "kind": "not_has_prefix",
+        "capture": "arg",
+        "value": "\""
+      }
+    ],
+    "message": "Dynamic code execution via eval()",
+    "enabled": true
+  },
+  {
+    "id": "PY002",
+    "language": "python",
+    "severity": "high",
+    "cwe": [
+      95
+    ],
+    "owasp": [
+      "A03:2021"
+    ],
+    "query": "(call function: (identifier) @callee arguments: (argument_list . (_) @arg)) @call",
+    "predicates": [
+      {
+        "kind": "text_equals",
+        "capture": "callee",
+        "value": "exec"
+      },
+      {
+        "kind": "not_has_prefix",
+        "capture": "arg",
+        "value": "\""
+      }
+    ],
+    "message": "Dynamic code execution via exec()",
+    "enabled": true
+  },
+  {
+    "id": "PY003",
+    "language": "python",
+    "severity": "high",
+    "cwe": [
+      502
+    ],
+    "owasp": [
+      "A08:2021"
+    ],
+    "query": "(call function: (attribute object: (identifier) @obj attribute: (identifier) @prop) arguments: (argument_list . (_) @arg)) @call",
+    "predicates": [
+      {
+        "kind": "text_equals",
+        "capture": "obj",
+        "value": "pickle"
+      },
+      {
+        "kind": "text_equals",
+        "capture": "prop",
+        "value": "loads"
+      }
+    ],
+    "message": "Unsafe pickle deserialization",
+    "enabled": true
+  },
+  {
+    "id": "PY004",
+    "language": "python",
+    "severity": "high",
+    "cwe": [
+      502
+    ],
+    "owasp": [
+      "A08:2021"
+    ],
+    "query": "(call function: (attribute object: (identifier) @obj attribute: (identifier) @prop) arguments: (argument_list . (_) @arg)) @call",
+    "predicates": [
+      {
+        "kind": "text_equals",
+        "capture": "obj",
+        "value": "yaml"
+      },
+      {
+        "kind": "text_equals",
+        "capture": "prop",
+        "value": "load"
+      }
+    ],
+    "message": "Unsafe YAML deserialization",
+    "enabled": true
+  },
+  {
+    "id": "PY005",
+    "language": "python",
+    "severity": "high",
+    "cwe": [
+      78
+    ],
+    "owasp": [
+      "A03:2021"
+    ],
+    "query": "(keyword_argument name: (identifier) @kw value: (true) @val) @arg",
+    "predicates": [
+      {
+        "kind": "text_equals",
+        "capture": "kw",
+        "value": "shell"
+      }
+    ],
+    "message": "Command injection via shell=True",
+    "enabled": true
+  },
+  {
+    "id": "PY006",
+    "language": "python",
+    "severity": "high",
+    "cwe": [
+      89
+    ],
+    "owasp": [
+      "A03:2021"
+    ],
+    "query": "(call function: (attribute object: (identifier) @obj attribute: (identifier) @prop) arguments: (argument_list . (_) @arg)) @call",
+    "predicates": [
+      {
+        "kind": "text_equals",
+        "capture": "prop",
+        "value": "execute"
+      },
+      {
+        "kind": "contains",
+        "capture": "arg",
+        "value": "+"
+      }
+    ],
+    "message": "SQL injection via string concatenation",
+    "enabled": true
+  },
+  {
+    "id": "PY007",
+    "language": "python",
+    "severity": "high",
+    "cwe": [
+      798
+    ],
+    "owasp": [
+      "A02:2021"
+    ],
+    "query": "(assignment left: (identifier) @name right: (_) @val) @assign",
+    "predicates": [
+      {
+        "kind": "text_equals",
+        "capture": "name",
+        "value": "api_key"
+      },
+      {
+        "kind": "has_prefix",
+        "capture": "val",
+        "value": "\""
+      }
+    ],
+    "message": "Hardcoded API key",
+    "enabled": true
+  },
+  {
+    "id": "PY008",
+    "language": "python",
+    "severity": "medium",
+    "cwe": [
+      295
+    ],
+    "owasp": [
+      "A02:2021"
+    ],
+    "query": "(keyword_argument name: (identifier) @kw value: (false) @val) @arg",
+    "predicates": [
+      {
+        "kind": "text_equals",
+        "capture": "kw",
+        "value": "verify"
+      }
+    ],
+    "message": "TLS verification disabled",
+    "enabled": true
+  },
+  {
+    "id": "PY009",
+    "language": "python",
+    "severity": "medium",
+    "cwe": [
+      328
+    ],
+    "owasp": [
+      "A02:2021"
+    ],
+    "query": "(call function: (attribute attribute: (identifier) @prop)) @call",
+    "predicates": [
+      {
+        "kind": "text_equals",
+        "capture": "prop",
+        "value": "md5"
+      }
+    ],
+    "message": "Weak hash algorithm (MD5)",
+    "enabled": true
+  },
+  {
+    "id": "PY010",
+    "language": "python",
+    "severity": "low",
+    "cwe": [
+      617
+    ],
+    "owasp": [
+      "A04:2021"
+    ],
+    "query": "(assert_statement) @stmt",
+    "predicates": [],
+    "message": "assert used for security check (stripped with -O)",
+    "enabled": true
+  },
+  {
+    "id": "JAVA001",
+    "language": "java",
+    "severity": "high",
+    "cwe": [
+      78
+    ],
+    "owasp": [
+      "A03:2021"
+    ],
+    "query": "(method_invocation name: (identifier) @name arguments: (argument_list . (_) @arg)) @call",
+    "predicates": [
+      {
+        "kind": "text_equals",
+        "capture": "name",
+        "value": "exec"
+      },
+      {
+        "kind": "not_has_prefix",
+        "capture": "arg",
+        "value": "\""
+      }
+    ],
+    "message": "Command injection via Runtime.exec()",
+    "enabled": true
+  },
+  {
+    "id": "JAVA002",
+    "language": "java",
+    "severity": "high",
+    "cwe": [
+      89
+    ],
+    "owasp": [
+      "A03:2021"
+    ],
+    "query": "(method_invocation name: (identifier) @name arguments: (argument_list . (_) @arg)) @call",
+    "predicates": [
+      {
+        "kind": "text_equals",
+        "capture": "name",
+        "value": "executeQuery"
+      },
+      {
+        "kind": "contains",
+        "capture": "arg",
+        "value": "+"
+      }
+    ],
+    "message": "SQL injection via concatenated query",
+    "enabled": true
+  },
+  {
+    "id": "JAVA003",
+    "language": "java",
+    "severity": "high",
+    "cwe": [
+      798
+    ],
+    "owasp": [
+      "A02:2021"
+    ],
+    "query": "(local_variable_declaration declarator: (variable_declarator name: (identifier) @name value: (string_literal) @val)) @decl",
+    "predicates": [
+      {
+        "kind": "text_equals",
+        "capture": "name",
+        "value": "password"
+      }
+    ],
+    "message": "Hardcoded password",
+    "enabled": true
+  },
+  {
+    "id": "JAVA004",
+    "language": "java",
+    "severity": "high",
+    "cwe": [
+      611
+    ],
+    "owasp": [
+      "A05:2021"
+    ],
+    "query": "(object_creation_expression type: (type_identifier) @t arguments: (argument_list . (_) @arg)) @new",
+    "predicates": [
+      {
+        "kind": "text_equals",
+        "capture": "t",
+        "value": "DocumentBuilderFactory"
+      }
+    ],
+    "message": "XXE-prone XML parser factory",
+    "enabled": true
+  },
+  {
+    "id": "JAVA005",
+    "language": "java",
+    "severity": "high",
+    "cwe": [
+      502
+    ],
+    "owasp": [
+      "A08:2021"
+    ],
+    "query": "(object_creation_expression type: (type_identifier) @t arguments: (argument_list . (_) @arg)) @new",
+    "predicates": [
+      {
+        "kind": "text_equals",
+        "capture": "t",
+        "value": "ObjectInputStream"
+      }
+    ],
+    "message": "Java deserialization of untrusted data",
+    "enabled": true
+  },
+  {
+    "id": "JAVA006",
+    "language": "java",
+    "severity": "medium",
+    "cwe": [
+      338
+    ],
+    "owasp": [
+      "A02:2021"
+    ],
+    "query": "(object_creation_expression type: (type_identifier) @t arguments: (argument_list . (_) @arg)) @new",
+    "predicates": [
+      {
+        "kind": "text_equals",
+        "capture": "t",
+        "value": "Random"
+      }
+    ],
+    "message": "Predictable random generator for tokens",
+    "enabled": true
+  },
+  {
+    "id": "JAVA007",
+    "language": "java",
+    "severity": "medium",
+    "cwe": [
+      22
+    ],
+    "owasp": [
+      "A01:2021"
+    ],
+    "query": "(object_creation_expression type: (type_identifier) @t arguments: (argument_list . (_) @arg)) @new",
+    "predicates": [
+      {
+        "kind": "text_equals",
+        "capture": "t",
+        "value": "File"
+      },
+      {
+        "kind": "not_has_prefix",
+        "capture": "arg",
+        "value": "\""
+      }
+    ],
+    "message": "File handle built from unvalidated path",
+    "enabled": true
+  },
+  {
+    "id": "JAVA008",
+    "language": "java",
+    "severity": "medium",
+    "cwe": [
+      532
+    ],
+    "owasp": [
+      "A09:2021"
+    ],
+    "query": "(method_invocation name: (identifier) @name arguments: (argument_list . (_) @arg)) @call",
+    "predicates": [
+      {
+        "kind": "text_equals",
+        "capture": "name",
+        "value": "info"
+      },
+      {
+        "kind": "contains",
+        "capture": "arg",
+        "value": "password"
+      }
+    ],
+    "message": "Sensitive value written to log",
+    "enabled": true
+  },
+  {
+    "id": "JAVA009",
+    "language": "java",
+    "severity": "medium",
+    "cwe": [
+      327
+    ],
+    "owasp": [
+      "A02:2021"
+    ],
+    "query": "(method_invocation name: (identifier) @name arguments: (argument_list . (_) @arg)) @call",
+    "predicates": [
+      {
+        "kind": "text_equals",
+        "capture": "name",
+        "value": "getInstance"
+      },
+      {
+        "kind": "contains",
+        "capture": "arg",
+        "value": "DES"
+      }
+    ],
+    "message": "Weak cipher algorithm (DES)",
+    "enabled": true
+  },
+  {
+    "id": "JAVA010",
+    "language": "java",
+    "severity": "low",
+    "cwe": [
+      209
+    ],
+    "owasp": [
+      "A09:2021"
+    ],
+    "query": "(method_invocation name: (identifier) @name) @call",
+    "predicates": [
+      {
+        "kind": "text_equals",
+        "capture": "name",
+        "value": "printStackTrace"
+      }
+    ],
+    "message": "Stack trace printed instead of handled",
+    "enabled": true
+  },
+  {
+    "id": "CFG001",
+    "language": "json",
+    "severity": "high",
+    "cwe": [
+      798
+    ],
+    "owasp": [
+      "A02:2021"
+    ],
+    "query": "(pair key: (string) @key value: (string) @val) @pair",
+    "predicates": [
+      {
+        "kind": "contains",
+        "capture": "key",
+        "value": "password"
+      }
+    ],
+    "message": "Plaintext password in configuration",
+    "enabled": true
+  },
+  {
+    "id": "CFG002",
+    "language": "json",
+    "severity": "medium",
+    "cwe": [
+      489
+    ],
+    "owasp": [
+      "A05:2021"
+    ],
+    "query": "(pair key: (string) @key value: (true) @val) @pair",
+    "predicates": [
+      {
+        "kind": "contains",
+        "capture": "key",
+        "value": "debug"
+      }
+    ],
+    "message": "Debug mode enabled in configuration",
+    "enabled": true
+  },
+  {
+    "id": "CFG003",
+    "language": "json",
+    "severity": "high",
+    "cwe": [
+      942
+    ],
+    "owasp": [
+      "A05:2021"
+    ],
+    "query": "(pair key: (string) @key value: (string) @val) @pair",
+    "predicates": [
+      {
+        "kind": "contains",
+        "capture": "key",
+        "value": "Origin"
+      },
+      {
+        "kind": "contains",
+        "capture": "val",
+        "value": "*"
+      }
+    ],
+    "message": "Permissive CORS origin",
+    "enabled": true
+  },
+  {
+    "id": "CFG004",
+    "language": "json",
+    "severity": "high",
+    "cwe": [
+      319
+    ],
+    "owasp": [
+      "A02:2021"
+    ],
+    "query": "(pair key: (string) @key value: (false) @val) @pair",
+    "predicates": [
+      {
+        "kind": "contains",
+        "capture": "key",
+        "value": "tls"
+      }
+    ],
+    "message": "TLS verification disabled in configuration",
+    "enabled": true
+  },
+  {
+    "id": "CFG005",
+    "language": "json",
+    "severity": "medium",
+    "cwe": [
+      732
+    ],
+    "owasp": [
+      "A01:2021"
+    ],
+    "query": "(pair key: (string) @key value: (string) @val) @pair",
+    "predicates": [
+      {
+        "kind": "contains",
+        "capture": "key",
+        "value": "permission"
+      },
+      {
+        "kind": "contains",
+        "capture": "val",
+        "value": "*"
+      }
+    ],
+    "message": "Wildcard permission grant",
+    "enabled": true
+  },
+  {
+    "id": "CFG006",
+    "language": "json",
+    "severity": "high",
+    "cwe": [
+      798
+    ],
+    "owasp": [
+      "A02:2021"
+    ],
+    "query": "(pair key: (string) @key value: (string) @val) @pair",
+    "predicates": [
+      {
+        "kind": "contains",
+        "capture": "key",
+        "value": "token"
+      }
+    ],
+    "message": "Hardcoded token in configuration",
+    "enabled": true
+  },
+  {
+    "id": "CFG007",
+    "language": "json",
+    "severity": "high",
+    "cwe": [
+      942
+    ],
+    "owasp": [
+      "A05:2021"
+    ],
+    "query": "(pair key: (string) @key value: (string) @val) @pair",
+    "predicates": [
+      {
+        "kind": "contains",
+        "capture": "key",
+        "value": "host"
+      },
+      {
+        "kind": "contains",
+        "capture": "val",
+        "value": "*"
+      }
+    ],
+    "message": "Wildcard host binding",
+    "enabled": true
+  },
+  {
+    "id": "CFG008",
+    "language": "json",
+    "severity": "high",
+    "cwe": [
+      295
+    ],
+    "owasp": [
+      "A02:2021"
+    ],
+    "query": "(pair key: (string) @key value: (false) @val) @pair",
+    "predicates": [
+      {
+        "kind": "contains",
+        "capture": "key",
+        "value": "verify"
+      }
+    ],
+    "message": "Verification disabled in configuration",
+    "enabled": true
+  },
+  {
+    "id": "CFG009",
+    "language": "json",
+    "severity": "medium",
+    "cwe": [
+      327
+    ],
+    "owasp": [
+      "A02:2021"
+    ],
+    "query": "(pair key: (string) @key value: (string) @val) @pair",
+    "predicates": [
+      {
+        "kind": "contains",
+        "capture": "key",
+        "value": "cipher"
+      },
+      {
+        "kind": "contains",
+        "capture": "val",
+        "value": "RC4"
+      }
+    ],
+    "message": "Weak cipher suite enabled",
+    "enabled": true
+  },
+  {
+    "id": "CFG010",
+    "language": "json",
+    "severity": "high",
+    "cwe": [
+      522
+    ],
+    "owasp": [
+      "A05:2021"
+    ],
+    "query": "(pair key: (string) @key value: (string) @val) @pair",
+    "predicates": [
+      {
+        "kind": "contains",
+        "capture": "key",
+        "value": "secret"
+      }
+    ],
+    "message": "Secret material stored in plaintext configuration",
+    "enabled": true
+  }
+]

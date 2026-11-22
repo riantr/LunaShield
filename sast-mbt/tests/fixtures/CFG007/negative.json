@@ -1,0 +1,4 @@
+{
+  "allowed_host": "app.example.com",
+  "name": "svc"
+}

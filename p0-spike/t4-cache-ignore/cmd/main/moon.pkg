@@ -1,0 +1,5 @@
+// import {
+//   "riantr/t4-cache-ignore" @lib,
+// }
+
+pkgtype(kind: "executable")

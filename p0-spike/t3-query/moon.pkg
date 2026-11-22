@@ -1,0 +1,5 @@
+import {
+  "moonbit-community/treesitter" @treesitter,
+  "moonbit-community/tree-sitter-json" @tree_sitter_json,
+  "moonbitlang/core/encoding/utf8",
+}

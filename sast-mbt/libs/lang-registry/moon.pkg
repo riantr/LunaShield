@@ -1,0 +1,8 @@
+import {
+  "moonbit-community/treesitter",
+  "moonbit-community/tree-sitter-javascript" @tsjs,
+  "moonbit-community/tree-sitter-typescript" @tsts,
+  "moonbit-community/tree-sitter-python" @tspy,
+  "moonbit-community/tree-sitter-java" @tsjava,
+  "moonbit-community/tree-sitter-json" @tsjson,
+}

@@ -1,0 +1,12 @@
+pkgtype(kind: "executable")
+
+import {
+  "moonbitlang/async" @async,
+  "moonbit-community/treesitter" @treesitter,
+  "moonbit-community/tree-sitter-javascript" @js,
+  "mizchi/bit_hash" @bithash,
+  "moonbitlang/core/encoding/utf8" @utf8,
+  "moonbitlang/core/env" @env,
+  "moonbitlang/core/json" @json,
+  "moonbitlang/async/fs" @fs,
+}

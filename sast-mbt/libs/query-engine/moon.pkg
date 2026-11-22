@@ -1,0 +1,6 @@
+import {
+  "moonbit-community/treesitter",
+  "sast/core-model" @core,
+  "sast/parser",
+  "sast/rule",
+}

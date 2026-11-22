@@ -1,0 +1,91 @@
+///|
+/// Fixed predicate whitelist. Tree-sitter native predicates live in the query string.
+#derive(Debug, Eq)
+pub(all) enum PredicateKind {
+  TextEquals
+  TextNotEquals
+  HasPrefix
+  NotHasPrefix
+  HasSuffix
+  NotHasSuffix
+  Contains
+  NotContains
+}
+
+///|
+/// A single host-side predicate on a captured node's source text.
+#derive(Debug, Eq, @json.ToJson)
+pub(all) struct PredicateSpec {
+  kind : PredicateKind
+  capture : String
+  value : String
+}
+
+///|
+/// A SAST rule. `enabled` defaults to true when omitted in JSON.
+#derive(Debug, Eq, @json.ToJson)
+pub(all) struct Rule {
+  id : String
+  language : String
+  severity : @core.Severity
+  cwe : Array[Int32]
+  owasp : Array[String]
+  query : String
+  predicates : Array[PredicateSpec]
+  message : String
+  enabled : Bool
+}
+
+///| Error with a JSON Pointer path and message, used by rules-validate.
+
+///|
+/// A `suberror` so parse/validate functions can `raise` it concisely.
+pub suberror RuleError {
+  RuleError(path~ : String, message~ : String)
+}
+
+///|
+/// Parse a predicate kind from its lowercase JSON name.
+pub fn predicate_kind_from_string(s : String) -> PredicateKind? {
+  match s {
+    "text_equals" => Some(TextEquals)
+    "text_not_equals" => Some(TextNotEquals)
+    "has_prefix" => Some(HasPrefix)
+    "not_has_prefix" => Some(NotHasPrefix)
+    "has_suffix" => Some(HasSuffix)
+    "not_has_suffix" => Some(NotHasSuffix)
+    "contains" => Some(Contains)
+    "not_contains" => Some(NotContains)
+    _ => None
+  }
+}
+
+///|
+/// Stable lowercase name of a predicate kind (inverse of the parser).
+pub fn predicate_kind_name(k : PredicateKind) -> String {
+  match k {
+    TextEquals => "text_equals"
+    TextNotEquals => "text_not_equals"
+    HasPrefix => "has_prefix"
+    NotHasPrefix => "not_has_prefix"
+    HasSuffix => "has_suffix"
+    NotHasSuffix => "not_has_suffix"
+    Contains => "contains"
+    NotContains => "not_contains"
+  }
+}
+
+///|
+/// All known predicate kind names, for `rules-validate` error messages.
+pub fn predicate_kind_names() -> Array[String] {
+  [
+    "text_equals", "text_not_equals", "has_prefix", "not_has_prefix", "has_suffix",
+    "not_has_suffix", "contains", "not_contains",
+  ]
+}
+
+///|
+/// Stable lowercase serialization for predicate kinds.
+pub impl @json.ToJson for PredicateKind with fn to_json(self) -> @json.Json {
+  @json.Json::string(predicate_kind_name(self))
+}

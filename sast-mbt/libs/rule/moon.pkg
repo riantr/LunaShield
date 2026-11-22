@@ -1,0 +1,4 @@
+import {
+  "sast/core-model" @core,
+  "moonbitlang/core/json",
+}

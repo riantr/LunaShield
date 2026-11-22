@@ -1,0 +1,14 @@
+import {
+  "moonbitlang/async",
+  "moonbitlang/async/fs",
+  "moonbitlang/async/semaphore",
+  "moonbitlang/core/json",
+  "sast/config",
+  "sast/core-model" @core,
+  "sast/lang-registry" @lang,
+  "sast/parser",
+  "sast/query-engine",
+  "sast/rule",
+  "sast/scoring",
+  "sast/source-file",
+}

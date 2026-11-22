@@ -1,0 +1,49 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+# Toolchain is pinned two ways for belt-and-braces reproducibility:
+#   1. sast-mbt/moonbit-version (read by moonup in local dev)
+#   2. the explicit `moonbit-version` input below (read by setup-moonup in CI)
+# Both must stay at the P0-verified baseline: moonc v0.10.21+06da1ed44.
+defaults:
+  run:
+    working-directory: sast-mbt
+
+jobs:
+  verify:
+    name: verify (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup MoonBit (pinned toolchain via moonup)
+        uses: chawyehsu/setup-moonup@v2
+        with:
+          moonbit-version: "0.10.21+06da1ed44"
+
+      - name: Verify pinned toolchain version
+        shell: bash
+        run: |
+          moonc -v | tee /tmp/moonc-version.txt
+          grep -q "0.10.21+06da1ed44" /tmp/moonc-version.txt || {
+            echo "ERROR: toolchain drifted from P0 baseline 0.10.21+06da1ed44"
+            exit 1
+          }
+
+      # Runs: dependency fetch, grammar patch gate, moon check/test (native),
+      # fmt check, rules-validate acceptance, cram (13 cases) and the golden
+      # rulepack check (50 rules, detection/FP thresholds).
+      - name: Run verification sequence
+        shell: bash
+        run: bash scripts/verify.sh
+
+      - name: Build CLI (native release)
+        shell: bash
+        run: moon build --target native --release

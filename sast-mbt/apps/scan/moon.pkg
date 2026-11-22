@@ -1,0 +1,10 @@
+pkgtype(kind: "executable")
+
+import {
+  "moonbitlang/async",
+  "moonbitlang/async/fs",
+  "moonbitlang/core/env",
+  "sast/config",
+  "sast/orchestrator",
+  "sast/report",
+}

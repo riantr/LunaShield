@@ -1,0 +1,4 @@
+{
+  "authRef": "vault:svc/token",
+  "name": "svc"
+}

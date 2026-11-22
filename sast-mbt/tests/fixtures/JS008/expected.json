@@ -1,0 +1,8 @@
+{
+  "rule_id": "JS008",
+  "positive_findings": 1,
+  "negative_findings": 0,
+  "positive_lines": [
+    1
+  ]
+}

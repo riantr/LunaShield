@@ -1,0 +1,15 @@
+# Build outputs
+_build/
+target/
+
+# MoonBit dependency cache. Grammar compatibility patches are applied to
+# .mooncakes at build time by scripts/patch_grammars.py; never commit them.
+.mooncakes/
+.repos/
+
+# Editor / OS
+.idea/
+.vscode/
+*.swp
+.DS_Store
+Thumbs.db

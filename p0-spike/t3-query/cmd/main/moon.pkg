@@ -1,0 +1,5 @@
+// import {
+//   "riantr/t3-query" @lib,
+// }
+
+pkgtype(kind: "executable")

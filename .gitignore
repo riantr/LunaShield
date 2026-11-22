@@ -1,0 +1,17 @@
+# Build outputs (all MoonBit sub-projects)
+_build/
+target/
+
+# MoonBit dependency cache and repos
+.mooncakes/
+.repos/
+
+# Editor / OS
+.idea/
+.vscode/
+*.swp
+.DS_Store
+Thumbs.db
+
+# Scratch dirs used by verification scripts
+.tmp-*/
