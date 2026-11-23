@@ -206,3 +206,33 @@ test "taint: prune_by_taint drops only weak verdicts" {
   let all_na = [hit("JS001", "a.js", 1, 1, "eval")]
   assert_eq(@scoring.prune_by_taint(all_na).length(), 1)
 }
+
+///|
+test "finalize: ties sort by column, then rule id, then fingerprint" {
+  // Same path+line: column decides first.
+  let by_col = @scoring.finalize([
+    hit("JS001", "a.js", 3, 9, "eval"),
+    hit("JS001", "a.js", 3, 2, "exec"),
+  ])
+  assert_eq(by_col.findings[0].primary.column, 2)
+  assert_eq(by_col.findings[1].primary.column, 9)
+  // Same position: rule id decides.
+  let by_rule = @scoring.finalize([
+    hit("JS002", "a.js", 3, 2, "eval"),
+    hit("JS001", "a.js", 3, 2, "eval"),
+  ])
+  assert_eq(by_rule.findings[0].rule_id, "JS001")
+  assert_eq(by_rule.findings[1].rule_id, "JS002")
+  // Same rule, same position: fingerprint decides, and it is stable.
+  let a = @scoring.finalize([
+    hit("JS001", "a.js", 3, 2, "b"),
+    hit("JS001", "a.js", 3, 2, "a"),
+  ])
+  let b = @scoring.finalize([
+    hit("JS001", "a.js", 3, 2, "a"),
+    hit("JS001", "a.js", 3, 2, "b"),
+  ])
+  assert_eq(a.findings[0].fingerprint, b.findings[0].fingerprint)
+  assert_eq(a.findings[1].fingerprint, b.findings[1].fingerprint)
+  assert_true(a.findings[0].fingerprint < a.findings[1].fingerprint)
+}

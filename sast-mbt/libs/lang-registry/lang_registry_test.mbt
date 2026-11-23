@@ -70,3 +70,10 @@ test "registry: every registration can be installed into a parser" {
     assert_true(installed)
   }
 }
+
+///|
+test "registry: all_extensions lists every extension in registration order" {
+  assert_eq(@lang-registry.all_extensions(), [
+    "js", "jsx", "mjs", "cjs", "ts", "tsx", "py", "java", "json",
+  ])
+}

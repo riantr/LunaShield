@@ -17,6 +17,37 @@ pub struct ParsedFile {
 }
 
 ///|
+/// Reused parsers, one per language. `Parser::new` + `set_language` costs more
+/// than parsing a small file, and a scan parses many files with the same few
+/// grammars. Reuse is safe because `parse` is synchronous and tree-sitter trees
+/// own their memory independently of the parser that produced them.
+let parser_cache : Map[String, @treesitter.Parser] = Map([])
+
+///|
+/// A parser with `spec`'s grammar installed, or `None` when the grammar cannot
+/// be loaded (cached failures are not re-attempted; a scan reports per file).
+fn parser_for(spec : @lang.LanguageSpec) -> @treesitter.Parser? {
+  match parser_cache.get(spec.id) {
+    Some(p) => Some(p)
+    None => {
+      let p = @treesitter.Parser::new()
+      let installed = try {
+        p.set_language(spec.language())
+        true
+      } catch {
+        _ => false
+      }
+      if installed {
+        parser_cache.set(spec.id, p)
+        Some(p)
+      } else {
+        None
+      }
+    }
+  }
+}
+
+///|
 /// Parse `text` with the grammar registered for `spec`.
 ///
 /// Syntax errors are reported as `ParseWarning`s and never abort the scan:
@@ -28,21 +59,16 @@ pub fn parse(
   path : String,
 ) -> ParsedFile {
   let source = @utf8.encode(text)
-  let parser = @treesitter.Parser::new()
-  let installed = try {
-    parser.set_language(spec.language())
-    true
-  } catch {
-    _ => false
-  }
-  guard installed else {
-    return {
-      path,
-      language: spec.id,
-      tree: None,
-      source,
-      warnings: [warning(path, 1, 1, "failed to load grammar '\{spec.id}'")],
-    }
+  let parser = match parser_for(spec) {
+    Some(p) => p
+    None =>
+      return {
+        path,
+        language: spec.id,
+        tree: None,
+        source,
+        warnings: [warning(path, 1, 1, "failed to load grammar '\{spec.id}'")],
+      }
   }
   match parser.parse(source) {
     None =>
@@ -75,15 +101,24 @@ fn warning(
 }
 
 ///|
+/// Collect syntax-error warnings for one tree.
+///
+/// `has_error()` short-circuits the walk: a file that parsed cleanly cannot
+/// produce a warning here (both `ERROR` and `MISSING` nodes make the root
+/// report an error), and walking every node of every file just to confirm that
+/// is the second-most expensive thing a scan does after matching.
 fn collect_error_warnings(
   tree : @treesitter.Tree,
   path : String,
 ) -> Array[@core.ParseWarning] {
   let out : Array[@core.ParseWarning] = []
+  let root = tree.root_node()
+  if !root.has_error() {
+    return out
+  }
   let cursor = tree.walk()
   visit_errors(cursor, path, out)
-  if out.length() == 0 && tree.root_node().has_error() {
-    let root = tree.root_node()
+  if out.length() == 0 {
     out.push(
       warning(
         path,

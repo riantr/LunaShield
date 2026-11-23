@@ -45,3 +45,13 @@ test "reporter: file names are fixed and console has none" {
     }
   }
 }
+
+///|
+test "reporter: name matches the registry key for every format" {
+  for f in @report.supported_formats() {
+    match @report.reporter_for(f) {
+      Some(rep) => assert_eq(rep.name(), f)
+      None => abort("missing reporter for \{f}")
+    }
+  }
+}

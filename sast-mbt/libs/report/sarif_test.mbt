@@ -90,3 +90,37 @@ test "sarif: empty result still emits a valid empty results array" {
   assert_true(text.contains("\"rules\":[]"))
   assert_true(text.has_suffix("\"results\":[]}]}"))
 }
+
+///|
+test "sarif: control characters in message and snippet are escaped" {
+  let f = sarif_finding(@core.High, "line\r\nnext\ttab", "a\tb")
+  let text = @report.render_sarif(sarif_result_of([f]))
+  assert_true(text.contains("\\r"))
+  assert_true(text.contains("\\t"))
+  // The raw control characters must not survive into the JSON document.
+  assert_true(!text.contains("\r"))
+  assert_true(!text.contains("\t"))
+}
+
+///|
+test "sarif: several rules are indexed once each and sorted by id" {
+  let f1 = sarif_finding(@core.High, "rule one", "eval")
+  let f2 : @core.Finding = { ..f1, rule_id: "JS002", message: "rule two", }
+  let f3 : @core.Finding = { ..f1, rule_id: "JS002", message: "rule two", }
+  let text = @report.render_sarif(sarif_result_of([f2, f1, f3]))
+  // Duplicate rule ids collapse into one driver entry, sorted by id.
+  assert_true(text.contains("\"id\":\"JS001\""))
+  assert_true(text.contains("\"id\":\"JS002\""))
+  let first = match text.find("\"id\":\"JS001\"") {
+    Some(i) => i
+    None => -1
+  }
+  let second = match text.find("\"id\":\"JS002\"") {
+    Some(i) => i
+    None => -1
+  }
+  assert_true(first >= 0 && second > first)
+  // The duplicated JS002 must appear exactly once in the rules array.
+  let count = text.replace(old="\"id\":\"JS002\"", new="").length()
+  assert_eq(text.length() - count, 12)
+}

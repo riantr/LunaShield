@@ -11,9 +11,22 @@ pub struct LanguageSpec {
 }
 
 ///|
-/// Materialize the grammar for this registration.
+/// Process-wide grammar cache. Materializing a grammar re-reads its tables, and
+/// a scan resolves the same grammar once per file, so the handle is kept for the
+/// lifetime of the process. Keyed by registration id, which is also the scan key.
+let language_cache : Map[String, @treesitter.Language] = Map([])
+
+///|
+/// Materialize the grammar for this registration (cached per id).
 pub fn LanguageSpec::language(self : LanguageSpec) -> @treesitter.Language {
-  (self.make_language)()
+  match language_cache.get(self.id) {
+    Some(l) => l
+    None => {
+      let l = (self.make_language)()
+      language_cache.set(self.id, l)
+      l
+    }
+  }
 }
 
 ///|

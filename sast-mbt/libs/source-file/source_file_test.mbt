@@ -122,3 +122,57 @@ test "loc: byte offset maps to 1-based line and column" {
   assert_eq(last.column, 4)
   assert_eq(last.byte_offset, 8)
 }
+
+///|
+async test "read_source: missing and oversized files are Skip, not errors" {
+  let missing = @source-file.read_source(".tmp-no-such-file.js", 1024) catch {
+    _ => abort("read_source must not raise")
+  }
+  assert_true(missing is @source-file.Skip(_))
+  match missing {
+    @source-file.Skip(reason) => assert_eq(reason, @source-file.Unreadable)
+    @source-file.Text(_) => abort("expected a skip")
+  }
+  // A 4-byte file read with a 2-byte cap is TooLarge.
+  let dir = ".tmp-read-limit"
+  let _ = @fs.rmdir(dir, recursive=true, allow_missing=true) catch { _ => () }
+  @fs.mkdir(dir, recursive=true, allow_exist=true)
+  @fs.write_file(dir + "/big.js", "eval(1)\n")
+  let big = @source-file.read_source(dir + "/big.js", 2) catch {
+    _ => abort("read_source must not raise")
+  }
+  match big {
+    @source-file.Skip(reason) => assert_eq(reason, @source-file.TooLarge)
+    @source-file.Text(_) => abort("expected TooLarge")
+  }
+  let _ = @fs.rmdir(dir, recursive=true, allow_missing=true) catch { _ => () }
+}
+
+///|
+test "skip reasons: every reason has a stable name" {
+  assert_eq(@source-file.skip_reason_name(@source-file.Ignored), "ignored")
+  assert_eq(@source-file.skip_reason_name(@source-file.Binary), "binary")
+  assert_eq(@source-file.skip_reason_name(@source-file.TooLarge), "too-large")
+  assert_eq(
+    @source-file.skip_reason_name(@source-file.Unreadable),
+    "unreadable",
+  )
+  assert_eq(
+    @source-file.skip_reason_name(@source-file.InvalidUtf8),
+    "invalid-utf8",
+  )
+}
+
+///|
+async test "discover: extra ignore patterns are honoured" {
+  let dir = ".tmp-discover-extra"
+  let _ = @fs.rmdir(dir, recursive=true, allow_missing=true) catch { _ => () }
+  @fs.mkdir(dir, recursive=true, allow_exist=true)
+  @fs.write_file(dir + "/keep.js", "eval(1)\n")
+  @fs.write_file(dir + "/drop.tmp.js", "eval(1)\n")
+  let found = @source-file.discover(dir, ["js"], [], extra_patterns=["*.tmp.js"]) catch {
+    _ => abort("discover must not raise")
+  }
+  assert_eq(found.files, ["keep.js"])
+  let _ = @fs.rmdir(dir, recursive=true, allow_missing=true) catch { _ => () }
+}

@@ -61,6 +61,80 @@ pub fn eval_predicates(
 }
 
 ///|
+/// Evaluate predicates against capture *nodes*, decoding a capture's text only
+/// when a predicate actually references it.
+///
+/// Semantics are identical to `eval_predicates` (all must pass, a missing
+/// capture fails closed); the difference is cost, since most matches are
+/// rejected by one predicate and never need the other captures' text.
+fn predicates_hold(
+  preds : Array[@rule.PredicateSpec],
+  bindings : Array[(@treesitter.Node, String)],
+  source : Bytes,
+) -> Bool {
+  for p in preds {
+    let mut found : String? = None
+    for pair in bindings {
+      let (n, name) = pair
+      if name == p.capture {
+        found = Some(@parser.text_of_node(n, source))
+        break
+      }
+    }
+    match found {
+      None => return false
+      Some(text) => if !eval_predicate(p, text) { return false }
+    }
+  }
+  true
+}
+
+///|
+/// Process-wide Query cache.
+///
+/// Compiling a tree-sitter query costs milliseconds while matching it on a
+/// small file costs microseconds, and one scan re-compiles every rule once per
+/// file. The rule set and grammar build are fixed for the whole scan, so the
+/// compiled query can be shared across files. The key includes the grammar
+/// identity (name + node/field counts), never the grammar alone, so a cache hit
+/// can only ever reuse a query compiled against exactly the same grammar.
+let query_cache : Map[String, @treesitter.Query] = Map([])
+
+///|
+fn query_cache_key(
+  language : @treesitter.Language,
+  query_text : String,
+) -> String {
+  let name = match language.name() {
+    Some(n) => n
+    None => "?"
+  }
+  name +
+  "\u{0}" +
+  language.field_count().to_string() +
+  "\u{0}" +
+  language.node_kind_count().to_string() +
+  "\u{0}" +
+  query_text
+}
+
+///|
+fn query_for(
+  language : @treesitter.Language,
+  query_text : String,
+) -> @treesitter.Query raise @treesitter.QueryError {
+  let key = query_cache_key(language, query_text)
+  match query_cache.get(key) {
+    Some(q) => q
+    None => {
+      let q = @treesitter.Query::new(language, query_text)
+      query_cache.set(key, q)
+      q
+    }
+  }
+}
+
+///|
 /// Run every enabled rule whose language matches `parsed` against `parsed`'s tree.
 ///
 /// The grammar is taken from `tree.language()` so a rule's Query is always
@@ -81,7 +155,7 @@ pub fn run_rules(
     if !rule.enabled || rule.language != parsed.language {
       continue
     }
-    let query = @treesitter.Query::new(language, rule.query) catch {
+    let query = query_for(language, rule.query) catch {
       @treesitter.QueryError(row~, column~, message~, ..) => {
         failures.push({
           rule_id: rule.id,
@@ -94,14 +168,18 @@ pub fn run_rules(
     let cursor = @treesitter.QueryCursor::new()
     let matches = cursor.matches(query, root, parsed.source)
     while matches.next() is Some(m) {
-      let captures : Map[String, String] = Map([])
+      // Collect nodes first, decode text only when a predicate (or the hit
+      // itself) asks for it: most matches die on a predicate, and decoding
+      // every capture's text just to discard the match dominates matching time
+      // for broad patterns.
+      let bindings : Array[(@treesitter.Node, String)] = []
       let mut primary : @treesitter.Node? = None
       let mut primary_index : Int32 = 2147483647
       for c in m.captures() {
         let idx = c.index
         if idx >= 0 && idx.to_int() < names.length() {
           let name = names[idx.to_int()]
-          captures.set(name, @parser.text_of_node(c.node, parsed.source))
+          bindings.push((c.node, name))
           if idx < primary_index {
             primary_index = idx
             primary = Some(c.node)
@@ -111,7 +189,12 @@ pub fn run_rules(
       match primary {
         None => ()
         Some(node) =>
-          if eval_predicates(rule.predicates, captures) {
+          if predicates_hold(rule.predicates, bindings, parsed.source) {
+            let captures : Map[String, String] = Map([])
+            for pair in bindings {
+              let (n, name) = pair
+              captures.set(name, @parser.text_of_node(n, parsed.source))
+            }
             hits.push({
               rule_id: rule.id,
               language: parsed.language,

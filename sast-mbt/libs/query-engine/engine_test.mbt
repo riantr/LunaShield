@@ -207,3 +207,39 @@ test "run_rules: unparsable file yields no hits and no failures" {
   assert_eq(result.failures.length(), 0)
   assert_eq(result.hits.length(), 0)
 }
+
+///|
+test "eval_predicates: a missing capture fails closed" {
+  let preds : Array[@rule.PredicateSpec] = [
+    @rule.PredicateSpec::{
+      kind: @rule.TextEquals,
+      capture: "callee",
+      value: "eval",
+    },
+  ]
+  assert_true(!@query-engine.eval_predicates(preds, Map([])))
+  assert_true(@query-engine.eval_predicates(preds, Map([("callee", "eval")])))
+  assert_true(!@query-engine.eval_predicates(preds, Map([("callee", "exec")])))
+  // Every predicate must pass; one failure rejects the match.
+  let two : Array[@rule.PredicateSpec] = [
+    @rule.PredicateSpec::{
+      kind: @rule.TextEquals,
+      capture: "callee",
+      value: "eval",
+    },
+    @rule.PredicateSpec::{
+      kind: @rule.HasPrefix,
+      capture: "arg",
+      value: "req",
+    },
+  ]
+  assert_true(
+    !@query-engine.eval_predicates(two, Map([("callee", "eval"), ("arg", "x")])),
+  )
+  assert_true(
+    @query-engine.eval_predicates(
+      two,
+      Map([("callee", "eval"), ("arg", "req.body")]),
+    ),
+  )
+}

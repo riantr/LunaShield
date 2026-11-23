@@ -56,3 +56,17 @@ test "SourceLoc and Finding fields" {
   assert_eq(finding.rule_id, "JS001")
   assert_eq(finding.severity, @core-model.High)
 }
+
+///|
+test "confidence: JSON emits the stable lowercase names" {
+  assert_eq(@core-model.confidence_name(@core-model.High), "high")
+  assert_eq(@core-model.confidence_name(@core-model.Medium), "medium")
+  assert_eq(@core-model.confidence_name(@core-model.Low), "low")
+  let mid : @core-model.Confidence = @core-model.Medium
+  assert_eq(@json.to_json(mid).stringify(), "\"medium\"")
+  assert_eq(
+    @core-model.confidence_from_string("medium"),
+    Some(@core-model.Medium),
+  )
+  assert_true(@core-model.confidence_from_string("MEDIUM") is None)
+}

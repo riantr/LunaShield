@@ -22,7 +22,7 @@ LunaShield（原研究代号 sast-mbt）是一个用 MoonBit 编写的源代码�
 
 ```bash
 cd sast-mbt
-bash scripts/verify.sh          # 9 步全量验收（依赖拉取、补丁门禁、check/test/fmt、rules-validate、cram、golden）
+bash scripts/verify.sh          # 10 步全量验收（依赖拉取、补丁门禁、check/test/fmt、rules-validate、cram、golden、覆盖率）
 moon build --target native --release apps/scan
 
 # 扫描

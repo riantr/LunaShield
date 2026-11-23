@@ -118,3 +118,32 @@ test "junit: xml special characters are escaped" {
   )
   assert_true(text.contains("&lt;script&gt;"))
 }
+
+///|
+test "render: medium confidence is spelled out in the JSON DTO" {
+  let f : @core.Finding = {
+    rule_id: "JS001",
+    severity: @core.High,
+    confidence: @core.Medium,
+    cwe: [95],
+    owasp: ["A03:2021"],
+    primary: { path: "a.js", line: 1, column: 1, byte_offset: 0, },
+    related: [],
+    message: "m",
+    snippet: "eval",
+    fingerprint: "f",
+  }
+  let result : @core.ScanResult = {
+    findings: [f],
+    warnings: [],
+    skipped_files: [],
+    stats: {
+      files_scanned: 1,
+      files_skipped: 0,
+      bytes_scanned: 1,
+      raw_hits: 1,
+      duration_ms: 0,
+    },
+  }
+  assert_true(@report.render_json(result).contains("\"confidence\":\"medium\""))
+}

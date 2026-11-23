@@ -489,10 +489,16 @@ pub async fn scan(
         scanned += 1
         bytes_scanned += fs.bytes
         raw_hits += fs.raw_hits
-        if fs.cache_hit {
-          cache_hits += 1
-        } else {
-          cache_misses += 1
+        // Cache statistics only exist when the cache does: a non-incremental
+        // scan must not report every file as a miss.
+        match cache {
+          Some(_) =>
+            if fs.cache_hit {
+              cache_hits += 1
+            } else {
+              cache_misses += 1
+            }
+          None => ()
         }
       }
     }
