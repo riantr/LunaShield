@@ -12,37 +12,40 @@ cd "$ROOT"
 # GitHub windows runners ship `python`, not always `python3`.
 PY="$(command -v python3 || command -v python)"
 
-echo "==> [1/10] resolve dependencies (moon check populates .mooncakes; no grammar compiled yet)"
+echo "==> [1/11] resolve dependencies (moon check populates .mooncakes; no grammar compiled yet)"
 moon check --target native
 
-echo "==> [2/10] apply grammar compatibility patch (idempotent, needed once after fetch)"
+echo "==> [2/11] apply grammar compatibility patch (idempotent, needed once after fetch)"
 $PY scripts/patch_grammars.py
 
-echo "==> [3/10] grammar compatibility gate (fails CI if any binding is unpatched)"
+echo "==> [3/11] grammar compatibility gate (fails CI if any binding is unpatched)"
 $PY scripts/patch_grammars.py --check
 
-echo "==> [4/10] moon check (native, full workspace)"
+echo "==> [4/11] moon check (native, full workspace)"
 moon check --target native
 
-echo "==> [5/10] moon test (native, primary path; needs Clang/MSVC+SDK)"
+echo "==> [5/11] moon test (native, primary path; needs Clang/MSVC+SDK)"
 moon test --target native
 
-echo "==> [6/10] moon fmt check"
+echo "==> [6/11] moon fmt check"
 moon fmt --check
 
-echo "==> [7/10] rules-validate acceptance (exit codes 0 / 2 with line/column)"
+echo "==> [7/11] rules-validate acceptance (exit codes 0 / 2 with line/column)"
 bash scripts/check_rules_validate.sh
 
-echo "==> [8/10] cram end-to-end (must pass the tests directory explicitly)"
+echo "==> [8/11] cram end-to-end (must pass the tests directory explicitly)"
 moon build --target native apps/scan
 moon cram test tests/cram/
 
-echo "==> [9/10] golden rulepack check (50 rules, detection/FP thresholds)"
+echo "==> [9/11] golden rulepack check (50 rules, detection/FP thresholds)"
 $PY scripts/gen_rulepack.py --check
 $PY scripts/check_golden.py
 
-echo "==> [10/10] line coverage gate (libs/** aggregate >= 90%, per-file >= 75%)"
+echo "==> [10/11] line coverage gate (libs/** aggregate >= 90%, per-file >= 75%)"
 $PY scripts/check_coverage.py
+
+echo "==> [11/11] sharded scan equivalence (merged report byte-identical)"
+$PY scripts/check_sharded.py
 
 if [[ "${1:-}" == "--js-test" ]]; then
   echo "==> EXTRA moon test (js backend, partial: async/fs packages are native-only)"
