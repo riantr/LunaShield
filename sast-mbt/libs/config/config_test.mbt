@@ -72,3 +72,11 @@ test "shard assignment is deterministic and partitions paths" {
   // single shard accepts everything
   assert_true(@config.in_shard(@config.default_config("x"), "any/path.js"))
 }
+
+///|
+test "defaults: fast cache is off so content is always hashed" {
+  let cfg = @config.default_config(".")
+  assert_true(!cfg.fast_cache)
+  assert_true(!cfg.incremental)
+  assert_eq(@config.taint_mode_name(cfg.taint_mode), "off")
+}

@@ -238,3 +238,87 @@ pub async fn save(cache_dir : String, entry : CacheEntry) -> Unit {
     _ => ()
   }
 }
+
+///|
+/// Probe index: `(path, size, mtime)` -> the entry a previous scan wrote.
+///
+/// The strict cache path needs the file *contents* to compute `content_hash`,
+/// so even a fully cached rescan reads every file. A probe lets a scan stat the
+/// file first and, on a hit, load the entry without touching the body. A probe
+/// is only trusted when path, size and mtime all match.
+///
+/// Opt-in on purpose (`--fast-cache`): mtime is not a content proof. A file
+/// rewritten with identical size inside the same mtime tick would be served
+/// stale findings, which is unacceptable as a default but a fine trade for
+/// repeated local/CI scans of a quiet tree.
+#derive(@json.ToJson, @json.FromJson)
+pub(all) struct CacheProbe {
+  path : String
+  size : Int64
+  mtime_sec : Int64
+  mtime_nsec : Int32
+  content_hash : String
+  entry_key : String
+}
+
+///|
+pub fn probe_key(
+  path : String,
+  size : Int64,
+  mtime_sec : Int64,
+  mtime_nsec : Int32,
+) -> String {
+  sha256_hex(
+    path +
+    "\u{0}" +
+    size.to_string() +
+    "\u{0}" +
+    mtime_sec.to_string() +
+    "\u{0}" +
+    mtime_nsec.to_string(),
+  )
+}
+
+///|
+pub fn probe_path(cache_dir : String, key : String) -> String {
+  cache_dir + "/probe/" + key + CACHE_FILE_SUFFIX
+}
+
+///|
+/// Persist a probe. Best effort, like `save`: a broken cache directory must
+/// degrade to misses, never to a failed scan.
+pub async fn save_probe(cache_dir : String, probe : CacheProbe) -> Unit {
+  let key = probe_key(probe.path, probe.size, probe.mtime_sec, probe.mtime_nsec)
+  let text = @json.to_json(probe).stringify() + "\n"
+  try {
+    @fs.mkdir(cache_dir + "/probe", recursive=true, allow_exist=true)
+    @fs.write_file(probe_path(cache_dir, key), text)
+  } catch {
+    _ => ()
+  }
+}
+
+///|
+/// Look up a probe for `(path, size, mtime)`. Every mismatch is a miss.
+pub async fn load_probe(
+  cache_dir : String,
+  path : String,
+  size : Int64,
+  mtime_sec : Int64,
+  mtime_nsec : Int32,
+) -> CacheProbe? {
+  let key = probe_key(path, size, mtime_sec, mtime_nsec)
+  let text = @fs.read_file(probe_path(cache_dir, key)).text() catch {
+    _ => return None
+  }
+  let json = @json.parse(text) catch { _ => return None }
+  let probe : CacheProbe = @json.from_json(json) catch { _ => return None }
+  if probe.path == path &&
+    probe.size == size &&
+    probe.mtime_sec == mtime_sec &&
+    probe.mtime_nsec == mtime_nsec {
+    Some(probe)
+  } else {
+    None
+  }
+}

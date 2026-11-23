@@ -14,6 +14,8 @@ LunaShield（原研究代号 sast-mbt）是一个用 MoonBit 编写的源代码�
 - **抑制语法**：`// sast-ignore`、`// sast-ignore-next-line`、`// sast-ignore: JS001,JS003`
 - **分片**：`--shard i/n`（FNV-1a over UTF-8，跨平台一致）
 - **增量扫描**：`--incremental --cache-dir <dir>`（键 = path + 内容哈希 + 规则包摘要 + 分析器版本）
+- **快速判活**：`--fast-cache`（隐含 `--incremental`）用 `(size, mtime)` 旁路 probe 命中缓存条目不读文件内容；
+  12MB 语料重复扫描 381ms → 139ms。代价是 mtime 不可作为内容证明，默认关闭
 - **CLI 退出码**：0 干净 / 1 门禁命中 / 2 配置或规则错误 / 3 不可恢复错误
 
 实测指标（`scripts/check_golden.py`）：**检出率 100%（50/50），反例误报率 0%**。

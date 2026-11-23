@@ -14,6 +14,8 @@ fn usage() -> String {
   "  --max-concurrency <n> per-file concurrency (default: 4)\n" +
   "  --incremental         reuse per-file results from --cache-dir\n" +
   "  --cache-dir <dir>     cache location (default: .lunashield-cache)\n" +
+  "  --fast-cache          trust (size, mtime) and skip reading unchanged files\n" +
+  "                        (implies --incremental; opt-in, mtime is not a content proof)\n" +
   "  --taint <mode>        off|report|strict taint analysis (default: off)\n"
 }
 
@@ -159,6 +161,11 @@ async fn main {
       let value = arg_or_fail(args, i)
       ignore_patterns.push(value)
       i += 2
+    } else if arg == "--fast-cache" {
+      // Fast cache is an incremental-mode switch; enabling it alone is a
+      // configuration error the user cannot debug, so imply --incremental.
+      cfg = { ..cfg, incremental: true, fast_cache: true, }
+      i += 1
     } else if arg == "--incremental" {
       cfg = { ..cfg, incremental: true, }
       i += 1

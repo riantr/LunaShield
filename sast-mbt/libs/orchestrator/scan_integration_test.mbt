@@ -250,3 +250,44 @@ async test "load_rule_pack: directory form loads rules.json and digests bytes" {
   assert_eq(rules.length(), 1)
   cleanup(dir)
 }
+
+///|
+async test "scan: fast cache replays entries without losing findings" {
+  let dir = setup_case("fast")
+  let cfg = {
+    ..js_config(dir),
+    incremental: true,
+    cache_dir: dir + "/cache",
+    fast_cache: true,
+  }
+  let first = @orchestrator.scan(cfg) catch {
+    _ => abort("first fast scan failed")
+  }
+  assert_eq(first.cache_misses, 3)
+  assert_eq(first.cache_hits, 0)
+  let second = @orchestrator.scan(cfg) catch {
+    _ => abort("second fast scan failed")
+  }
+  assert_eq(second.cache_misses, 0)
+  assert_eq(second.cache_hits, 3)
+  assert_eq(second.result.findings.length(), first.result.findings.length())
+  for i in 0..<first.result.findings.length() {
+    assert_eq(
+      second.result.findings[i].fingerprint,
+      first.result.findings[i].fingerprint,
+    )
+  }
+  cleanup(dir)
+}
+
+///|
+async test "scan: strict cache keeps content hashing when fast cache is off" {
+  let dir = setup_case("strictonly")
+  let cfg = { ..js_config(dir), incremental: true, cache_dir: dir + "/cache", }
+  let _ = @orchestrator.scan(cfg) catch { _ => abort("warm-up scan failed") }
+  let second = @orchestrator.scan(cfg) catch { _ => abort("rescan failed") }
+  assert_eq(second.cache_hits, 3)
+  // The default path never writes probes.
+  assert_true(!@fs.exists(dir + "/cache/probe"))
+  cleanup(dir)
+}

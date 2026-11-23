@@ -46,6 +46,8 @@ priv struct CacheCtx {
   rules_digest : String
   taint_digest : String
   analyzer_version : String
+  /// Trust `(size, mtime)` probes and skip reading unchanged files.
+  fast_cache : Bool
 }
 
 ///|
@@ -202,6 +204,52 @@ fn fs_path(root : String, rel : String) -> String {
 }
 
 ///|
+/// Replay a cached result without reading the file body.
+///
+/// Returns `None` on any miss (no probe, stale entry, oversized file, stat
+/// failure) so the caller falls back to the strict path — which also produces
+/// the correct Skip reason for files this path declines to handle.
+async fn fast_cached_scan(
+  root : String,
+  path : String,
+  max_bytes : Int32,
+  ctx : CacheCtx,
+) -> FileScan? {
+  let abs = fs_path(root, path)
+  let size = @fs.file_size(abs) catch { _ => return None }
+  if size > max_bytes.to_int64() {
+    return None
+  }
+  let (mtime_sec, mtime_nsec) = @fs.mtime(abs) catch { _ => return None }
+  let probe = match
+    @cache.load_probe(ctx.dir, path, size, mtime_sec, mtime_nsec) {
+    Some(p) => p
+    None => return None
+  }
+  let entry = match
+    @cache.load(
+      ctx.dir,
+      probe.entry_key,
+      path,
+      probe.content_hash,
+      ctx.rules_digest,
+      ctx.taint_digest,
+      ctx.analyzer_version,
+    ) {
+    Some(e) => e
+    None => return None
+  }
+  Some({
+    findings: entry.findings.map(@cache.from_cached),
+    raw_hits: entry.raw_hits,
+    warnings: entry.warnings.map(@cache.warning_from_cached),
+    skipped: None,
+    bytes: entry.bytes,
+    cache_hit: true,
+  })
+}
+
+///|
 /// Full pipeline for one file: read, parse, run rules, drop suppressed hits,
 /// then (optionally) persist or reuse a cache entry.
 async fn scan_one(
@@ -213,6 +261,16 @@ async fn scan_one(
   taint_spec : @taint.TaintSpec?,
   taint_mode : @config.TaintMode,
 ) -> FileScan {
+  match cache {
+    Some(ctx) =>
+      if ctx.fast_cache {
+        match fast_cached_scan(root, path, max_bytes, ctx) {
+          Some(fs) => return fs
+          None => ()
+        }
+      }
+    None => ()
+  }
   match @source-file.read_source(fs_path(root, path), max_bytes) {
     @source-file.Skip(reason) =>
       {
@@ -293,6 +351,25 @@ async fn scan_one(
               fs.warnings,
             ),
           )
+          // Record the probe so a later --fast-cache run can skip reading this
+          // file. Only written when the fast path is on, so the default cache
+          // layout is unchanged.
+          if ctx.fast_cache {
+            let size = @fs.file_size(fs_path(root, path)) catch {
+              _ => return fs
+            }
+            let (mtime_sec, mtime_nsec) = @fs.mtime(fs_path(root, path)) catch {
+              _ => return fs
+            }
+            @cache.save_probe(ctx.dir, {
+              path,
+              size,
+              mtime_sec,
+              mtime_nsec,
+              content_hash,
+              entry_key: key,
+            })
+          }
           fs
         }
       }
@@ -426,6 +503,7 @@ pub async fn scan(
       rules_digest: pack.digest,
       taint_digest: taint.digest,
       analyzer_version: analyzer,
+      fast_cache: config.fast_cache,
     })
   } else {
     None

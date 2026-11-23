@@ -39,3 +39,39 @@ async test "save: an impossible directory path fails soft" {
   @cache.save(dir, entry)
   assert_true(true)
 }
+
+///|
+async test "probe: roundtrip, then every stat field invalidates" {
+  let dir = ".tmp-probe-rt"
+  let _ = @fs.rmdir(dir, recursive=true, allow_missing=true) catch { _ => () }
+  let probe : @cache.CacheProbe = {
+    path: "src/a.js",
+    size: 42L,
+    mtime_sec: 1_700_000_000L,
+    mtime_nsec: 123_456_789,
+    content_hash: "h1",
+    entry_key: "k1",
+  }
+  @cache.save_probe(dir, probe)
+  let hit = @cache.load_probe(dir, "src/a.js", 42L, 1_700_000_000L, 123_456_789)
+  match hit {
+    Some(p) => {
+      assert_eq(p.content_hash, "h1")
+      assert_eq(p.entry_key, "k1")
+    }
+    None => abort("probe should hit")
+  }
+  assert_true(
+    @cache.load_probe(dir, "src/b.js", 42L, 1_700_000_000L, 123_456_789) is None,
+  )
+  assert_true(
+    @cache.load_probe(dir, "src/a.js", 43L, 1_700_000_000L, 123_456_789) is None,
+  )
+  assert_true(
+    @cache.load_probe(dir, "src/a.js", 42L, 1_700_000_001L, 123_456_789) is None,
+  )
+  assert_true(
+    @cache.load_probe(dir, "src/a.js", 42L, 1_700_000_000L, 1) is None,
+  )
+  let _ = @fs.rmdir(dir, recursive=true, allow_missing=true) catch { _ => () }
+}

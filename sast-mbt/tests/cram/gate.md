@@ -73,3 +73,19 @@ $ rm -rf w && mkdir -p w/src && printf '%s' '[{"id":"JS001","language":"javascri
 SAME
 cache: 1 hit, 0 miss
 ```
+
+## Fast cache: probe replay, and the mtime trade-off it buys
+
+The fast path trusts `(size, mtime)` and never reads the body, so the second run
+replays without touching the file. That is a real trade: a file rewritten to the
+same size inside the same mtime tick keeps the old verdict until it is touched.
+The strict path hashes content and therefore sees the rewrite immediately.
+
+```mooncram
+$ rm -rf wf && mkdir -p wf/src && printf '%s' '[{"id":"JS001","language":"javascript","severity":"high","cwe":[95],"owasp":["A03:2021"],"query":"(call_expression function: (identifier) @callee arguments: (arguments . (_) @arg)) @call","predicates":[{"kind":"text_equals","capture":"callee","value":"eval"},{"kind":"not_has_prefix","capture":"arg","value":"\""}],"message":"Dynamic code execution via eval()","enabled":true}]' > wf/rules.json && printf 'function f(req) {{ eval(req.query.x); }}\n' > wf/src/a.js && scan.exe wf/src --rules wf/rules.json --format console --fast-cache --cache-dir wf/cache | tail -1 && scan.exe wf/src --rules wf/rules.json --format console --fast-cache --cache-dir wf/cache | tail -1 && cp -p wf/src/a.js wf/ref.js && printf 'function f(req) {{ exec(req.query.x); }}\n' > wf/src/a.js && touch -r wf/ref.js wf/src/a.js && scan.exe wf/src --rules wf/rules.json --format console --incremental --cache-dir wf/cache | grep 'findings:' && scan.exe wf/src --rules wf/rules.json --format console --fast-cache --cache-dir wf/cache | grep 'findings:' && touch wf/src/a.js && scan.exe wf/src --rules wf/rules.json --format console --fast-cache --cache-dir wf/cache | grep 'findings:'
+cache: 0 hit, 1 miss
+cache: 1 hit, 0 miss
+findings: 0 (critical 0, high 0, medium 0, low 0, info 0)
+findings: 1 (critical 0, high 1, medium 0, low 0, info 0)
+findings: 0 (critical 0, high 0, medium 0, low 0, info 0)
+```

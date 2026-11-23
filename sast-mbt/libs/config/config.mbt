@@ -55,6 +55,10 @@ pub(all) struct ScanConfig {
   rulepack_version : String
   cache_dir : String
   taint_mode : TaintMode
+  /// Trust `(size, mtime)` probes instead of hashing file contents before a
+  /// cache lookup. Opt-in: mtime is not a content proof, so the default path
+  /// keeps reading and hashing every file.
+  fast_cache : Bool
 }
 
 ///|
@@ -81,6 +85,7 @@ pub fn default_config(root : String) -> ScanConfig {
     rulepack_version: "",
     cache_dir: ".lunashield-cache",
     taint_mode: Off,
+    fast_cache: false,
   }
 }
 
