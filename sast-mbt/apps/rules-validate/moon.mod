@@ -12,4 +12,5 @@ import {
   "moonbitlang/async@0.22.10",
   "sast/lang-registry@0.1.0",
   "sast/rule@0.1.0",
+  "sast/taint@0.1.0",
 }

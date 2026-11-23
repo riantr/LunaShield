@@ -87,7 +87,99 @@ async fn check_manifest(pack_dir : String) -> String {
   if actual != expected {
     return "rules.json SHA-256 mismatch: expected \{expected}, got \{actual}"
   }
+  // The taint manifest is optional, but a declared one must be checksummed
+  // too: an unnoticed edit could silently disable a sink without touching
+  // rules.json (and therefore without invalidating its checksum).
+  match obj.get("taint_file") {
+    Some(@json.String(tf)) => {
+      let expected_taint = match obj.get("taint_sha256") {
+        Some(@json.String(s)) => s
+        _ => return "manifest.json: taint_file declared without taint_sha256"
+      }
+      let taint_path = "\{pack_dir}/\{tf}"
+      guard @fs.exists(taint_path) else { return "missing \{taint_path}" }
+      let taint_bytes = @utf8.encode(read_text(taint_path))
+      let taint_actual = @bithash.hex_encode(@bithash.sha256_raw(taint_bytes))
+      if taint_actual != expected_taint {
+        return "\{tf} SHA-256 mismatch: expected \{expected_taint}, got \{taint_actual}"
+      }
+    }
+    _ => ()
+  }
   ""
+}
+
+///|
+/// Manifest-declared path, with the conventional name as a fallback for packs
+/// that predate the `taint_file` field.
+async fn manifest_taint_path(pack_dir : String) -> String {
+  let manifest_json = @json.parse(read_text("\{pack_dir}/manifest.json")) catch {
+    _ => return "\{pack_dir}/taint.json"
+  }
+  match manifest_json {
+    @json.Object(obj) =>
+      match obj.get("taint_file") {
+        Some(@json.String(s)) => "\{pack_dir}/\{s}"
+        _ => "\{pack_dir}/taint.json"
+      }
+    _ => "\{pack_dir}/taint.json"
+  }
+}
+
+///|
+/// A sink declared under language L must point at a rule whose language is L.
+/// `validate_spec` only checks that the id exists; this closes the second half
+/// of the manifest contract without changing the frozen taint API.
+fn check_taint_languages(
+  spec : @taint.TaintSpec,
+  rules : Array[@rule.Rule],
+) -> Array[String] {
+  let errors : Array[String] = []
+  for lang in spec.languages {
+    for sink in lang.sinks {
+      for r in rules {
+        if r.id == sink.rule_id && r.language != lang.language {
+          errors.push(
+            "taint.json: \{lang.language}: sink '\{sink.rule_id}' belongs to language '\{r.language}'",
+          )
+        }
+      }
+    }
+  }
+  errors
+}
+
+///|
+/// Validate the optional taint manifest. A missing file is allowed (older
+/// packs); a present one must parse, satisfy the taint schema, and agree with
+/// the rule pack's id/language pairs.
+async fn validate_taint(
+  pack_dir : String,
+  rules : Array[@rule.Rule],
+) -> Array[String] {
+  let errors : Array[String] = []
+  let path = manifest_taint_path(pack_dir)
+  guard @fs.exists(path) else { return errors }
+  let json = @json.parse(read_text(path)) catch {
+    e => {
+      errors.push("taint.json parse error: \{e}")
+      return errors
+    }
+  }
+  let spec = @taint.parse_spec(json) catch {
+    @taint.TaintSpecError(message~) => {
+      errors.push("taint.json: \{message}")
+      return errors
+    }
+  }
+  @taint.validate_spec(spec, rules.map(fn(r) { r.id })) catch {
+    // validate_spec messages already carry the "taint.json:" path prefix.
+    @taint.TaintSpecError(message~) => errors.push(message)
+  }
+  for e in check_taint_languages(spec, rules) {
+    errors.push(e)
+  }
+  errors
 }
 
 ///|
@@ -126,6 +218,9 @@ async fn validate_pack(
       }
   }
   for e in validate_queries(rules, fixtures_dir) {
+    errors.push(e)
+  }
+  for e in validate_taint(pack_dir, rules) {
     errors.push(e)
   }
   errors

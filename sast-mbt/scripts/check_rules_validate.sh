@@ -51,4 +51,69 @@ if ! grep -q "line .*column" /tmp/rv-bad.out; then
 fi
 rm -rf "$BAD_DIR"
 
+# S4b-5: taint manifest must be schema-checked, cross-checked against rules and
+# checksummed. Each case gets its own pack copy so manifest hashes stay honest.
+make_taint_case() {
+  local mode="$1"
+  local d=".tmp-rv-taint-$mode"
+  rm -rf "$d"
+  mkdir -p "$d"
+  cp rulepacks/official/rules.json rulepacks/official/taint.json rulepacks/official/manifest.json "$d/"
+  python3 - "$d/taint.json" "$d/manifest.json" "$mode" <<'PY'
+import hashlib
+import json
+import sys
+
+taint_path, manifest_path, mode = sys.argv[1], sys.argv[2], sys.argv[3]
+with open(taint_path, encoding="utf-8") as f:
+    spec = json.load(f)
+with open(manifest_path, encoding="utf-8") as f:
+    manifest = json.load(f)
+
+if mode in ("unknown-sink", "wrong-language"):
+    for lang in spec["languages"]:
+        if lang["language"] == "javascript":
+            for sink in lang["sinks"]:
+                if sink["rule_id"] == "JS001":
+                    sink["rule_id"] = "JS999" if mode == "unknown-sink" else "PY001"
+
+with open(taint_path, "w", encoding="utf-8") as f:
+    json.dump(spec, f)
+# sha-mismatch deliberately keeps the manifest's original hash.
+if mode != "sha-mismatch":
+    with open(taint_path, "rb") as f:
+        manifest["taint_sha256"] = hashlib.sha256(f.read()).hexdigest()
+    with open(manifest_path, "w", encoding="utf-8") as f:
+        json.dump(manifest, f)
+PY
+  echo "$d"
+}
+
+check_taint_case() {
+  local mode="$1" expect="$2"
+  local d
+  d="$(make_taint_case "$mode")"
+  echo "==> taint case: $mode (expect exit 2 with '$expect')"
+  set +e
+  "$EXE" "$d" tests/fixtures > /tmp/rv-taint.out 2>&1
+  local code=$?
+  set -e
+  cat /tmp/rv-taint.out
+  if [[ $code -ne 2 ]]; then
+    echo "FAIL: taint case $mode returned $code, expected 2"
+    rm -rf "$d"
+    exit 1
+  fi
+  if ! grep -q "$expect" /tmp/rv-taint.out; then
+    echo "FAIL: taint case $mode output lacks '$expect'"
+    rm -rf "$d"
+    exit 1
+  fi
+  rm -rf "$d"
+}
+
+check_taint_case "unknown-sink" "unknown rule"
+check_taint_case "wrong-language" "belongs to language"
+check_taint_case "sha-mismatch" "SHA-256 mismatch"
+
 echo "RULES-VALIDATE ACCEPTANCE PASSED"

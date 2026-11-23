@@ -3,5 +3,7 @@
   "version": "1.0.0",
   "analyzer_min_version": "0.1.0",
   "rules_file": "rules.json",
-  "rules_sha256": "6593c2c37a62f7add65f8cf404e3ed47117ac28bb6600f83bc482857d5cd0384"
+  "rules_sha256": "6593c2c37a62f7add65f8cf404e3ed47117ac28bb6600f83bc482857d5cd0384",
+  "taint_file": "taint.json",
+  "taint_sha256": "55543ecf39cd63c73986a24763a980950a277a1ff75d6c6d7ac9427c9924fe20"
 }

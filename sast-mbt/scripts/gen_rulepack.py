@@ -465,6 +465,12 @@ def build():
         "rules_file": "rules.json",
         "rules_sha256": sha,
     }
+    # S4b-5: the optional taint manifest is declared and checksummed here too,
+    # keeping the generator as the single source of truth for manifest.json.
+    taint_path = PACK / "taint.json"
+    if taint_path.exists():
+        manifest["taint_file"] = "taint.json"
+        manifest["taint_sha256"] = hashlib.sha256(taint_path.read_bytes()).hexdigest()
     files[PACK / "manifest.json"] = json.dumps(manifest, indent=2, ensure_ascii=False) + "\n"
     for entry in RULES:
         rid, lang, _sev, _cwe, _owasp, _q, _preds, _msg, pos, neg = entry
