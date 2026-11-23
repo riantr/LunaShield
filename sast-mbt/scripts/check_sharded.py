@@ -80,6 +80,22 @@ def main() -> int:
     # The bash wrapper is a portability fallback; one mode is enough to guard
     # that its merge inputs stay in sync with the Python orchestrator.
     ok = compare(corpus, tmp, "off", "sh", SHARD_SCRIPT_SH) and ok
+
+    # The official pack declares every positive fixture as a sink and supplies
+    # a source for it, so strict must not prune any of them. Pin that contract:
+    # a future edit that drops a source would otherwise still pass the
+    # byte-identity checks above (off/report/strict would all just agree).
+    off_report = json.loads((tmp / "base-py-off" / "findings.json").read_text(encoding="utf-8"))
+    strict_report = json.loads((tmp / "base-py-strict" / "findings.json").read_text(encoding="utf-8"))
+    off_ids = {f["primary"]["path"] for f in off_report["findings"]}
+    strict_ids = {f["primary"]["path"] for f in strict_report["findings"]}
+    missing = sorted(off_ids - strict_ids)
+    if missing:
+        print(f"  strict pruned declared positives: {missing}")
+        ok = False
+    else:
+        print(f"  strict keeps all {len(off_ids)} positive findings (no taint pruning)")
+
     print("SHARDED CHECK %s" % ("PASSED" if ok else "FAILED"))
     return 0 if ok else 1
 

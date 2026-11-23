@@ -10,7 +10,9 @@
         { "name": "url_query", "node_kind": "member_expression", "text_contains": "location.search" },
         { "name": "argv", "node_kind": "member_expression", "text_contains": "process.argv" },
         { "name": "cookie", "node_kind": "member_expression", "text_contains": "document.cookie" },
-        { "name": "window_name", "node_kind": "member_expression", "text_contains": "window.name" }
+        { "name": "window_name", "node_kind": "member_expression", "text_contains": "window.name" },
+        { "name": "var_user_input", "node_kind": "identifier", "text_contains": "userInput" },
+        { "name": "var_user_id", "node_kind": "identifier", "text_contains": "userId" }
       ],
       "sanitizers": [
         { "name": "escape_html", "callee_contains": "escapeHtml" },
@@ -33,7 +35,9 @@
         { "name": "http_query", "node_kind": "member_expression", "text_contains": "req.query" },
         { "name": "http_body", "node_kind": "member_expression", "text_contains": "req.body" },
         { "name": "http_params", "node_kind": "member_expression", "text_contains": "req.params" },
-        { "name": "argv", "node_kind": "member_expression", "text_contains": "process.argv" }
+        { "name": "argv", "node_kind": "member_expression", "text_contains": "process.argv" },
+        { "name": "var_payload", "node_kind": "identifier", "text_contains": "payload" },
+        { "name": "var_user_input", "node_kind": "identifier", "text_contains": "userInput" }
       ],
       "sanitizers": [
         { "name": "escape_html", "callee_contains": "escapeHtml" },
@@ -51,7 +55,9 @@
       "language": "tsx",
       "sources": [
         { "name": "props", "node_kind": "member_expression", "text_contains": "props." },
-        { "name": "http_query", "node_kind": "member_expression", "text_contains": "req.query" }
+        { "name": "http_query", "node_kind": "member_expression", "text_contains": "req.query" },
+        { "name": "var_payload", "node_kind": "identifier", "text_contains": "payload" },
+        { "name": "js_url_attribute", "node_kind": "string", "text_contains": "javascript:" }
       ],
       "sanitizers": [
         { "name": "dom_purify", "callee_contains": "DOMPurify.sanitize" },
@@ -70,7 +76,11 @@
         { "name": "request_get", "node_kind": "attribute", "text_contains": "request.GET" },
         { "name": "request_post", "node_kind": "attribute", "text_contains": "request.POST" },
         { "name": "argv", "node_kind": "attribute", "text_contains": "sys.argv" },
-        { "name": "stdin", "node_kind": "call", "text_contains": "input(" }
+        { "name": "stdin", "node_kind": "call", "text_contains": "input(" },
+        { "name": "var_user_input", "node_kind": "identifier", "text_contains": "user_input" },
+        { "name": "var_cmd", "node_kind": "identifier", "text_contains": "cmd" },
+        { "name": "var_uid", "node_kind": "identifier", "text_contains": "uid" },
+        { "name": "shell_flag", "node_kind": "identifier", "text_contains": "shell" }
       ],
       "sanitizers": [
         { "name": "html_escape", "callee_contains": "escape" },
@@ -92,7 +102,10 @@
         { "name": "servlet_param", "node_kind": "method_invocation", "text_contains": "getParameter" },
         { "name": "servlet_header", "node_kind": "method_invocation", "text_contains": "getHeader" },
         { "name": "servlet_cookie", "node_kind": "method_invocation", "text_contains": "getCookies" },
-        { "name": "request_body", "node_kind": "method_invocation", "text_contains": "getInputStream" }
+        { "name": "request_body", "node_kind": "method_invocation", "text_contains": "getInputStream" },
+        { "name": "var_input", "node_kind": "identifier", "text_contains": "input" },
+        { "name": "var_id", "node_kind": "identifier", "text_contains": "id" },
+        { "name": "var_user_input", "node_kind": "identifier", "text_contains": "userInput" }
       ],
       "sanitizers": [
         { "name": "owasp_html", "callee_contains": "encodeForHTML" },

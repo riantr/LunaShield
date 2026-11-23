@@ -5,5 +5,5 @@
   "rules_file": "rules.json",
   "rules_sha256": "6593c2c37a62f7add65f8cf404e3ed47117ac28bb6600f83bc482857d5cd0384",
   "taint_file": "taint.json",
-  "taint_sha256": "55543ecf39cd63c73986a24763a980950a277a1ff75d6c6d7ac9427c9924fe20"
+  "taint_sha256": "42c41fd2943c7d6ccbe8c4d4cd7815c6b117fe4cb8dfccbb10ca4b33dd65e435"
 }
