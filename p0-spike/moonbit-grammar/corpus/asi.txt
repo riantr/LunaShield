@@ -1,0 +1,86 @@
+================================================================================
+question
+================================================================================
+fn f() -> Result[Unit, String] {
+  let x = f
+?(1, 2)
+  Ok(x)
+}
+--------------------------------------------------------------------------------
+
+(structure
+  (function_definition
+    (function_identifier
+      (lowercase_identifier))
+    (parameters)
+    (return_type
+      (apply_type
+        (qualified_type_identifier
+          (identifier
+            (uppercase_identifier)))
+        (type_arguments
+          (qualified_type_identifier
+            (identifier
+              (uppercase_identifier)))
+          (qualified_type_identifier
+            (identifier
+              (uppercase_identifier))))))
+    (block_expression
+      (let_expression
+        (lowercase_identifier)
+        (apply_expression
+          (qualified_identifier
+            (lowercase_identifier))
+          (apply_operator)
+          (arguments
+            (argument
+              (atomic_expression
+                (literal
+                  (integer_literal))))
+            (argument
+              (atomic_expression
+                (literal
+                  (integer_literal)))))))
+      (apply_expression
+        (constructor_expression
+          (uppercase_identifier))
+        (arguments
+          (argument
+            (qualified_identifier
+              (lowercase_identifier))))))))
+
+================================================================================
+comma
+================================================================================
+fn main {
+  loop a {
+    _ => {
+      continue 1,
+        2   ,
+3
+    }
+  }
+}
+--------------------------------------------------------------------------------
+
+(structure
+  (function_definition
+    (function_identifier
+      (lowercase_identifier))
+    (block_expression
+      (loop_expression
+        (qualified_identifier
+          (lowercase_identifier))
+        (matrix_case_clause
+          (any_pattern)
+          (block_expression
+            (continue_expression
+              (atomic_expression
+                (literal
+                  (integer_literal)))
+              (atomic_expression
+                (literal
+                  (integer_literal)))
+              (atomic_expression
+                (literal
+                  (integer_literal))))))))))

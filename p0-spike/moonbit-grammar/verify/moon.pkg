@@ -1,0 +1,11 @@
+import {
+  "moonbit-community/treesitter" @treesitter,
+  "spike/moonbit-grammar/pkg" @pkg,
+  "moonbitlang/core/encoding/utf8",
+  "moonbitlang/core/json" @json,
+  "moonbitlang/async/fs" @fs,
+}
+
+pkgtype(kind: "executable")
+
+supported_targets = "+native"

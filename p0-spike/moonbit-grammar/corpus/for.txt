@@ -1,0 +1,928 @@
+================================================================================
+for
+================================================================================
+fn init {
+  for i = 0; i < 10; i = i + 1 {
+  }
+}
+--------------------------------------------------------------------------------
+
+(structure
+  (function_definition
+    (function_identifier
+      (lowercase_identifier))
+    (block_expression
+      (for_expression
+        (for_binder
+          (lowercase_identifier)
+          (atomic_expression
+            (literal
+              (integer_literal))))
+        (binary_expression
+          (qualified_identifier
+            (lowercase_identifier))
+          (atomic_expression
+            (literal
+              (integer_literal))))
+        (for_binder
+          (lowercase_identifier)
+          (binary_expression
+            (qualified_identifier
+              (lowercase_identifier))
+            (atomic_expression
+              (literal
+                (integer_literal)))))
+        (block_expression)))))
+
+================================================================================
+forever
+================================================================================
+fn init {
+  for i = 0; i < 10; {
+  }
+}
+--------------------------------------------------------------------------------
+
+(structure
+  (function_definition
+    (function_identifier
+      (lowercase_identifier))
+    (block_expression
+      (for_expression
+        (for_binder
+          (lowercase_identifier)
+          (atomic_expression
+            (literal
+              (integer_literal))))
+        (binary_expression
+          (qualified_identifier
+            (lowercase_identifier))
+          (atomic_expression
+            (literal
+              (integer_literal))))
+        (block_expression)))))
+
+================================================================================
+for without trailing semicolon
+================================================================================
+fn init {
+  for xs = self, acc = Nil; xs is Cons(x, xs) {
+    continue xs, Cons(x, acc)
+  } nobreak {
+    acc
+  }
+}
+--------------------------------------------------------------------------------
+
+(structure
+  (function_definition
+    (function_identifier
+      (lowercase_identifier))
+    (block_expression
+      (for_expression
+        (for_binder
+          (lowercase_identifier)
+          (qualified_identifier
+            (lowercase_identifier)))
+        (for_binder
+          (lowercase_identifier)
+          (constructor_expression
+            (uppercase_identifier)))
+        (is_expression
+          (qualified_identifier
+            (lowercase_identifier))
+          (constructor_pattern
+            (constructor_expression
+              (uppercase_identifier))
+            (constructor_pattern_argument
+              (lowercase_identifier))
+            (constructor_pattern_argument
+              (lowercase_identifier))))
+        (block_expression
+          (continue_expression
+            (qualified_identifier
+              (lowercase_identifier))
+            (apply_expression
+              (constructor_expression
+                (uppercase_identifier))
+              (arguments
+                (argument
+                  (qualified_identifier
+                    (lowercase_identifier)))
+                (argument
+                  (qualified_identifier
+                    (lowercase_identifier)))))))
+        (nobreak_clause
+          (block_expression
+            (qualified_identifier
+              (lowercase_identifier))))))))
+
+================================================================================
+simple for
+================================================================================
+fn init {
+  for i = 0 {
+    i = i + 1
+    continue i + 1
+  }
+}
+--------------------------------------------------------------------------------
+
+(structure
+  (function_definition
+    (function_identifier
+      (lowercase_identifier))
+    (block_expression
+      (for_expression
+        (for_binder
+          (lowercase_identifier)
+          (atomic_expression
+            (literal
+              (integer_literal))))
+        (block_expression
+          (assign_expression
+            (left_value
+              (qualified_identifier
+                (lowercase_identifier)))
+            (assign_operator)
+            (binary_expression
+              (qualified_identifier
+                (lowercase_identifier))
+              (atomic_expression
+                (literal
+                  (integer_literal)))))
+          (continue_expression
+            (binary_expression
+              (qualified_identifier
+                (lowercase_identifier))
+              (atomic_expression
+                (literal
+                  (integer_literal))))))))))
+
+================================================================================
+for-in
+================================================================================
+fn init {
+  let a = [1, 2, 3, 4, 5]
+  for i in a {
+    i
+  }
+}
+--------------------------------------------------------------------------------
+
+(structure
+  (function_definition
+    (function_identifier
+      (lowercase_identifier))
+    (block_expression
+      (let_expression
+        (lowercase_identifier)
+        (array_expression
+          (atomic_expression
+            (literal
+              (integer_literal)))
+          (atomic_expression
+            (literal
+              (integer_literal)))
+          (atomic_expression
+            (literal
+              (integer_literal)))
+          (atomic_expression
+            (literal
+              (integer_literal)))
+          (atomic_expression
+            (literal
+              (integer_literal)))))
+      (for_in_expression
+        (lowercase_identifier)
+        (qualified_identifier
+          (lowercase_identifier))
+        (block_expression
+          (qualified_identifier
+            (lowercase_identifier)))))))
+
+================================================================================
+for-in with pipe iterable
+================================================================================
+fn main {
+  for x in xs |> filter() {
+  }
+}
+--------------------------------------------------------------------------------
+
+(structure
+  (function_definition
+    (function_identifier
+      (lowercase_identifier))
+    (block_expression
+      (for_in_expression
+        (lowercase_identifier)
+        (binary_expression
+          (qualified_identifier
+            (lowercase_identifier))
+          (apply_expression
+            (qualified_identifier
+              (lowercase_identifier))
+            (arguments)))
+        (block_expression)))))
+
+================================================================================
+for-in with line break body
+================================================================================
+fn main {
+  for x in xs
+  {
+  }
+}
+--------------------------------------------------------------------------------
+
+(structure
+  (function_definition
+    (function_identifier
+      (lowercase_identifier))
+    (block_expression
+      (for_in_expression
+        (lowercase_identifier)
+        (qualified_identifier
+          (lowercase_identifier))
+        (block_expression)))))
+
+================================================================================
+for-in with loop state
+================================================================================
+fn main {
+  for k, v in extra_env; i = inherited_env_entry_count; i = i + 1 {
+  }
+}
+--------------------------------------------------------------------------------
+
+(structure
+  (function_definition
+    (function_identifier
+      (lowercase_identifier))
+    (block_expression
+      (for_in_expression
+        (lowercase_identifier)
+        (lowercase_identifier)
+        (qualified_identifier
+          (lowercase_identifier))
+        (for_binder
+          (lowercase_identifier)
+          (qualified_identifier
+            (lowercase_identifier)))
+        (for_binder
+          (lowercase_identifier)
+          (binary_expression
+            (qualified_identifier
+              (lowercase_identifier))
+            (atomic_expression
+              (literal
+                (integer_literal)))))
+        (block_expression)))))
+
+================================================================================
+for-in with line break loop state
+================================================================================
+fn main {
+  for v in values
+      i = 0 {
+  }
+}
+--------------------------------------------------------------------------------
+
+(structure
+  (function_definition
+    (function_identifier
+      (lowercase_identifier))
+    (block_expression
+      (for_in_expression
+        (lowercase_identifier)
+        (qualified_identifier
+          (lowercase_identifier))
+        (for_binder
+          (lowercase_identifier)
+          (atomic_expression
+            (literal
+              (integer_literal))))
+        (block_expression)))))
+
+================================================================================
+for-in with single loop state and line break body
+================================================================================
+fn main {
+  for v in values; i = 0
+  {
+  }
+}
+--------------------------------------------------------------------------------
+
+(structure
+  (function_definition
+    (function_identifier
+      (lowercase_identifier))
+    (block_expression
+      (for_in_expression
+        (lowercase_identifier)
+        (qualified_identifier
+          (lowercase_identifier))
+        (for_binder
+          (lowercase_identifier)
+          (atomic_expression
+            (literal
+              (integer_literal))))
+        (block_expression)))))
+
+================================================================================
+for-else
+================================================================================
+fn init {
+  for i = 0; i < 10; i = i + 1 {
+    i
+  } else {
+    0
+  }
+}
+--------------------------------------------------------------------------------
+
+(structure
+  (function_definition
+    (function_identifier
+      (lowercase_identifier))
+    (block_expression
+      (for_expression
+        (for_binder
+          (lowercase_identifier)
+          (atomic_expression
+            (literal
+              (integer_literal))))
+        (binary_expression
+          (qualified_identifier
+            (lowercase_identifier))
+          (atomic_expression
+            (literal
+              (integer_literal))))
+        (for_binder
+          (lowercase_identifier)
+          (binary_expression
+            (qualified_identifier
+              (lowercase_identifier))
+            (atomic_expression
+              (literal
+                (integer_literal)))))
+        (block_expression
+          (qualified_identifier
+            (lowercase_identifier)))
+        (else_clause
+          (block_expression
+            (atomic_expression
+              (literal
+                (integer_literal)))))))))
+
+================================================================================
+for-in-else
+================================================================================
+fn init {
+  let a = [1, 2, 3, 4, 5]
+  for i in a {
+    i
+  } else {
+    0
+  }
+}
+--------------------------------------------------------------------------------
+
+(structure
+  (function_definition
+    (function_identifier
+      (lowercase_identifier))
+    (block_expression
+      (let_expression
+        (lowercase_identifier)
+        (array_expression
+          (atomic_expression
+            (literal
+              (integer_literal)))
+          (atomic_expression
+            (literal
+              (integer_literal)))
+          (atomic_expression
+            (literal
+              (integer_literal)))
+          (atomic_expression
+            (literal
+              (integer_literal)))
+          (atomic_expression
+            (literal
+              (integer_literal)))))
+      (for_in_expression
+        (lowercase_identifier)
+        (qualified_identifier
+          (lowercase_identifier))
+        (block_expression
+          (qualified_identifier
+            (lowercase_identifier)))
+        (else_clause
+          (block_expression
+            (atomic_expression
+              (literal
+                (integer_literal)))))))))
+
+================================================================================
+for in range
+================================================================================
+fn main {
+  for i in 0..<array.length() {
+  }
+  for j in 1..=array.length() {
+  }
+}
+--------------------------------------------------------------------------------
+
+(structure
+  (function_definition
+    (function_identifier
+      (lowercase_identifier))
+    (block_expression
+      (for_in_expression
+        (lowercase_identifier)
+        (range_expression
+          (atomic_expression
+            (literal
+              (integer_literal)))
+          (dot_apply_expression
+            (qualified_identifier
+              (lowercase_identifier))
+            (dot_identifier
+              (dot_lowercase_identifier))))
+        (block_expression))
+      (for_in_expression
+        (lowercase_identifier)
+        (range_expression
+          (atomic_expression
+            (literal
+              (integer_literal)))
+          (dot_apply_expression
+            (qualified_identifier
+              (lowercase_identifier))
+            (dot_identifier
+              (dot_lowercase_identifier))))
+        (block_expression)))))
+
+================================================================================
+for in reverse exclusive range
+================================================================================
+fn main {
+  for i in n>..0 {
+  }
+}
+--------------------------------------------------------------------------------
+
+(structure
+  (function_definition
+    (function_identifier
+      (lowercase_identifier))
+    (block_expression
+      (for_in_expression
+        (lowercase_identifier)
+        (range_expression
+          (qualified_identifier
+            (lowercase_identifier))
+          (atomic_expression
+            (literal
+              (integer_literal))))
+        (block_expression)))))
+
+================================================================================
+for in reverse inclusive range
+================================================================================
+fn main {
+  for i in n>=..0 {
+  }
+}
+--------------------------------------------------------------------------------
+
+(structure
+  (function_definition
+    (function_identifier
+      (lowercase_identifier))
+    (block_expression
+      (for_in_expression
+        (lowercase_identifier)
+        (range_expression
+          (qualified_identifier
+            (lowercase_identifier))
+          (atomic_expression
+            (literal
+              (integer_literal))))
+        (block_expression)))))
+
+================================================================================
+for with line break
+================================================================================
+fn init {
+  for i = 0
+      i < 10
+      i = i + 1 {
+  }
+}
+--------------------------------------------------------------------------------
+
+(structure
+  (function_definition
+    (function_identifier
+      (lowercase_identifier))
+    (block_expression
+      (for_expression
+        (for_binder
+          (lowercase_identifier)
+          (atomic_expression
+            (literal
+              (integer_literal))))
+        (binary_expression
+          (qualified_identifier
+            (lowercase_identifier))
+          (atomic_expression
+            (literal
+              (integer_literal))))
+        (for_binder
+          (lowercase_identifier)
+          (binary_expression
+            (qualified_identifier
+              (lowercase_identifier))
+            (atomic_expression
+              (literal
+                (integer_literal)))))
+        (block_expression)))))
+
+================================================================================
+for with loop
+================================================================================
+fn main {
+  label~: for x in xs {
+    println(x)
+  }
+}
+--------------------------------------------------------------------------------
+
+(structure
+  (function_definition
+    (function_identifier
+      (lowercase_identifier))
+    (block_expression
+      (for_in_expression
+        (loop_label
+          (label
+            (lowercase_identifier)))
+        (lowercase_identifier)
+        (qualified_identifier
+          (lowercase_identifier))
+        (block_expression
+          (apply_expression
+            (qualified_identifier
+              (lowercase_identifier))
+            (arguments
+              (argument
+                (qualified_identifier
+                  (lowercase_identifier))))))))))
+
+================================================================================
+for asi
+================================================================================
+fn main {
+  for i = 0; i < 10; i = i + 1 {
+  }
+  for
+    i = 0
+    i < 10
+    i = i + 1 {
+  }
+  for
+    i = 0;
+    i < 10;
+    i = i + 1 {
+  }
+  for
+    i = 0
+    ;i < 10
+    ;i = i + 1 {
+  }
+}
+--------------------------------------------------------------------------------
+
+(structure
+  (function_definition
+    (function_identifier
+      (lowercase_identifier))
+    (block_expression
+      (for_expression
+        (for_binder
+          (lowercase_identifier)
+          (atomic_expression
+            (literal
+              (integer_literal))))
+        (binary_expression
+          (qualified_identifier
+            (lowercase_identifier))
+          (atomic_expression
+            (literal
+              (integer_literal))))
+        (for_binder
+          (lowercase_identifier)
+          (binary_expression
+            (qualified_identifier
+              (lowercase_identifier))
+            (atomic_expression
+              (literal
+                (integer_literal)))))
+        (block_expression))
+      (for_expression
+        (for_binder
+          (lowercase_identifier)
+          (atomic_expression
+            (literal
+              (integer_literal))))
+        (binary_expression
+          (qualified_identifier
+            (lowercase_identifier))
+          (atomic_expression
+            (literal
+              (integer_literal))))
+        (for_binder
+          (lowercase_identifier)
+          (binary_expression
+            (qualified_identifier
+              (lowercase_identifier))
+            (atomic_expression
+              (literal
+                (integer_literal)))))
+        (block_expression))
+      (for_expression
+        (for_binder
+          (lowercase_identifier)
+          (atomic_expression
+            (literal
+              (integer_literal))))
+        (binary_expression
+          (qualified_identifier
+            (lowercase_identifier))
+          (atomic_expression
+            (literal
+              (integer_literal))))
+        (for_binder
+          (lowercase_identifier)
+          (binary_expression
+            (qualified_identifier
+              (lowercase_identifier))
+            (atomic_expression
+              (literal
+                (integer_literal)))))
+        (block_expression))
+      (for_expression
+        (for_binder
+          (lowercase_identifier)
+          (atomic_expression
+            (literal
+              (integer_literal))))
+        (binary_expression
+          (qualified_identifier
+            (lowercase_identifier))
+          (atomic_expression
+            (literal
+              (integer_literal))))
+        (for_binder
+          (lowercase_identifier)
+          (binary_expression
+            (qualified_identifier
+              (lowercase_identifier))
+            (atomic_expression
+              (literal
+                (integer_literal)))))
+        (block_expression)))))
+
+================================================================================
+for asi with comments
+:language(moonbit)
+================================================================================
+fn main {
+  for // a
+    i = 0
+    // b
+    i < 10
+    // c
+    i = i + 1 {
+  }
+  for i = 0 // a
+    i < 10 // b
+    i = i + 1 // c
+  {
+  }
+}
+--------------------------------------------------------------------------------
+
+(structure
+  (function_definition
+    (function_identifier
+      (lowercase_identifier))
+    (block_expression
+      (for_expression
+        (comment)
+        (for_binder
+          (lowercase_identifier)
+          (atomic_expression
+            (literal
+              (integer_literal))))
+        (comment)
+        (binary_expression
+          (qualified_identifier
+            (lowercase_identifier))
+          (atomic_expression
+            (literal
+              (integer_literal))))
+        (comment)
+        (for_binder
+          (lowercase_identifier)
+          (binary_expression
+            (qualified_identifier
+              (lowercase_identifier))
+            (atomic_expression
+              (literal
+                (integer_literal)))))
+        (block_expression))
+      (for_expression
+        (for_binder
+          (lowercase_identifier)
+          (atomic_expression
+            (literal
+              (integer_literal))))
+        (comment)
+        (binary_expression
+          (qualified_identifier
+            (lowercase_identifier))
+          (atomic_expression
+            (literal
+              (integer_literal))))
+        (comment)
+        (for_binder
+          (lowercase_identifier)
+          (binary_expression
+            (qualified_identifier
+              (lowercase_identifier))
+            (atomic_expression
+              (literal
+                (integer_literal)))))
+        (comment)
+        (block_expression)))))
+
+================================================================================
+for-in destructuring patterns
+================================================================================
+fn main {
+  for (x, y) in points { consume(x, y) }
+  for index, (_, value) in entries { consume(index, value) }
+  for { field, .. } in records { consume(field) }
+  let values = [ for (x, y) in points if x > 0 => x + y ]
+}
+--------------------------------------------------------------------------------
+
+(structure
+  (function_definition
+    (function_identifier
+      (lowercase_identifier))
+    (block_expression
+      (for_in_expression
+        (tuple_pattern
+          (lowercase_identifier)
+          (lowercase_identifier))
+        (qualified_identifier
+          (lowercase_identifier))
+        (block_expression
+          (apply_expression
+            (qualified_identifier
+              (lowercase_identifier))
+            (arguments
+              (argument
+                (qualified_identifier
+                  (lowercase_identifier)))
+              (argument
+                (qualified_identifier
+                  (lowercase_identifier)))))))
+      (for_in_expression
+        (lowercase_identifier)
+        (tuple_pattern
+          (any_pattern)
+          (lowercase_identifier))
+        (qualified_identifier
+          (lowercase_identifier))
+        (block_expression
+          (apply_expression
+            (qualified_identifier
+              (lowercase_identifier))
+            (arguments
+              (argument
+                (qualified_identifier
+                  (lowercase_identifier)))
+              (argument
+                (qualified_identifier
+                  (lowercase_identifier)))))))
+      (for_in_expression
+        (struct_pattern
+          (struct_field_pattern
+            (labeled_pattern_pun
+              (lowercase_identifier))))
+        (qualified_identifier
+          (lowercase_identifier))
+        (block_expression
+          (apply_expression
+            (qualified_identifier
+              (lowercase_identifier))
+            (arguments
+              (argument
+                (qualified_identifier
+                  (lowercase_identifier)))))))
+      (let_expression
+        (lowercase_identifier)
+        (array_expression
+          (list_comprehension_expression
+            (list_comprehension_for_in
+              (list_comprehension_binder
+                (tuple_pattern
+                  (lowercase_identifier)
+                  (lowercase_identifier)))
+              (qualified_identifier
+                (lowercase_identifier)))
+            (list_comprehension_guard
+              (binary_expression
+                (qualified_identifier
+                  (lowercase_identifier))
+                (atomic_expression
+                  (literal
+                    (integer_literal)))))
+            (binary_expression
+              (qualified_identifier
+                (lowercase_identifier))
+              (qualified_identifier
+                (lowercase_identifier)))))))))
+
+================================================================================
+comprehensions with empty initialization and updates
+================================================================================
+fn main {
+  let values = [ for ; next() is Some(x); => x ]
+  let values = [ for i = 0; i < 3; => i ]
+  let values = [ for ; ready() => read() ]
+}
+--------------------------------------------------------------------------------
+
+(structure
+  (function_definition
+    (function_identifier
+      (lowercase_identifier))
+    (block_expression
+      (let_expression
+        (lowercase_identifier)
+        (array_expression
+          (list_comprehension_expression
+            (list_comprehension_for
+              (is_expression
+                (apply_expression
+                  (qualified_identifier
+                    (lowercase_identifier))
+                  (arguments))
+                (constructor_pattern
+                  (constructor_expression
+                    (uppercase_identifier))
+                  (constructor_pattern_argument
+                    (lowercase_identifier)))))
+            (qualified_identifier
+              (lowercase_identifier)))))
+      (let_expression
+        (lowercase_identifier)
+        (array_expression
+          (list_comprehension_expression
+            (list_comprehension_for
+              (for_binder
+                (lowercase_identifier)
+                (atomic_expression
+                  (literal
+                    (integer_literal))))
+              (binary_expression
+                (qualified_identifier
+                  (lowercase_identifier))
+                (atomic_expression
+                  (literal
+                    (integer_literal)))))
+            (qualified_identifier
+              (lowercase_identifier)))))
+      (let_expression
+        (lowercase_identifier)
+        (array_expression
+          (list_comprehension_expression
+            (list_comprehension_for
+              (apply_expression
+                (qualified_identifier
+                  (lowercase_identifier))
+                (arguments)))
+            (apply_expression
+              (qualified_identifier
+                (lowercase_identifier))
+              (arguments))))))))

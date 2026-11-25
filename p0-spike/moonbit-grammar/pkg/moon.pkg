@@ -1,0 +1,9 @@
+import {
+  "moonbit-community/treesitter" @treesitter,
+  "moonbit-community/treesitter/language" @language,
+  "moonbit-community/treesitter/runtime",
+}
+
+import {
+  "moonbitlang/core/encoding/utf8",
+} for "test"

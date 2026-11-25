@@ -1,0 +1,9 @@
+import {
+  "moonbit-community/treesitter/generate" @generate,
+  "moonbitlang/async/fs" @fs,
+  "moonbitlang/async",
+}
+
+pkgtype(kind: "executable")
+
+supported_targets = "+native"

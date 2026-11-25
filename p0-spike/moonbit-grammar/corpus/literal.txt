@@ -1,0 +1,565 @@
+================================================================================
+escaping chars
+================================================================================
+fn init {
+  println('\b')
+  println('\r')
+  println('\n')
+  println('\t')
+  println('\'')
+  println('\x78')
+  println("\o377")
+  println("\u{20BB7}")
+  println("\u6211")
+  println("\u6221好\n")
+}
+--------------------------------------------------------------------------------
+
+(structure
+  (function_definition
+    (function_identifier
+      (lowercase_identifier))
+    (block_expression
+      (apply_expression
+        (qualified_identifier
+          (lowercase_identifier))
+        (arguments
+          (argument
+            (atomic_expression
+              (literal
+                (char_literal
+                  (escape_sequence)))))))
+      (apply_expression
+        (qualified_identifier
+          (lowercase_identifier))
+        (arguments
+          (argument
+            (atomic_expression
+              (literal
+                (char_literal
+                  (escape_sequence)))))))
+      (apply_expression
+        (qualified_identifier
+          (lowercase_identifier))
+        (arguments
+          (argument
+            (atomic_expression
+              (literal
+                (char_literal
+                  (escape_sequence)))))))
+      (apply_expression
+        (qualified_identifier
+          (lowercase_identifier))
+        (arguments
+          (argument
+            (atomic_expression
+              (literal
+                (char_literal
+                  (escape_sequence)))))))
+      (apply_expression
+        (qualified_identifier
+          (lowercase_identifier))
+        (arguments
+          (argument
+            (atomic_expression
+              (literal
+                (char_literal
+                  (escape_sequence)))))))
+      (apply_expression
+        (qualified_identifier
+          (lowercase_identifier))
+        (arguments
+          (argument
+            (atomic_expression
+              (literal
+                (char_literal
+                  (escape_sequence)))))))
+      (apply_expression
+        (qualified_identifier
+          (lowercase_identifier))
+        (arguments
+          (argument
+            (atomic_expression
+              (literal
+                (string_literal
+                  (string_fragment
+                    (unescaped_string_fragment))
+                  (string_fragment
+                    (unescaped_string_fragment))))))))
+      (apply_expression
+        (qualified_identifier
+          (lowercase_identifier))
+        (arguments
+          (argument
+            (atomic_expression
+              (literal
+                (string_literal
+                  (string_fragment
+                    (unescaped_string_fragment))
+                  (string_fragment
+                    (unescaped_string_fragment))))))))
+      (apply_expression
+        (qualified_identifier
+          (lowercase_identifier))
+        (arguments
+          (argument
+            (atomic_expression
+              (literal
+                (string_literal
+                  (string_fragment
+                    (unescaped_string_fragment))
+                  (string_fragment
+                    (unescaped_string_fragment))))))))
+      (apply_expression
+        (qualified_identifier
+          (lowercase_identifier))
+        (arguments
+          (argument
+            (atomic_expression
+              (literal
+                (string_literal
+                  (string_fragment
+                    (unescaped_string_fragment))
+                  (string_fragment
+                    (unescaped_string_fragment))
+                  (string_fragment
+                    (escape_sequence)))))))))))
+
+================================================================================
+byte literal
+================================================================================
+fn init {
+  let b1 = b'a'
+  println(b1.to_int())
+  let b2 = b'\xff'
+  println(b2.to_int())
+}
+--------------------------------------------------------------------------------
+
+(structure
+  (function_definition
+    (function_identifier
+      (lowercase_identifier))
+    (block_expression
+      (let_expression
+        (lowercase_identifier)
+        (atomic_expression
+          (literal
+            (byte_literal))))
+      (apply_expression
+        (qualified_identifier
+          (lowercase_identifier))
+        (arguments
+          (argument
+            (dot_apply_expression
+              (qualified_identifier
+                (lowercase_identifier))
+              (dot_identifier
+                (dot_lowercase_identifier))))))
+      (let_expression
+        (lowercase_identifier)
+        (atomic_expression
+          (literal
+            (byte_literal
+              (escape_sequence)))))
+      (apply_expression
+        (qualified_identifier
+          (lowercase_identifier))
+        (arguments
+          (argument
+            (dot_apply_expression
+              (qualified_identifier
+                (lowercase_identifier))
+              (dot_identifier
+                (dot_lowercase_identifier)))))))))
+
+================================================================================
+interpolation
+================================================================================
+fn main {
+  println("hello, \{name}")
+    abort("Index length does not match tensor shape \{asdf}")
+}
+--------------------------------------------------------------------------------
+
+(structure
+  (function_definition
+    (function_identifier
+      (lowercase_identifier))
+    (block_expression
+      (apply_expression
+        (qualified_identifier
+          (lowercase_identifier))
+        (arguments
+          (argument
+            (atomic_expression
+              (string_interpolation
+                (string_fragment
+                  (unescaped_string_fragment))
+                (interpolator
+                  (qualified_identifier
+                    (lowercase_identifier))))))))
+      (apply_expression
+        (qualified_identifier
+          (lowercase_identifier))
+        (arguments
+          (argument
+            (atomic_expression
+              (string_interpolation
+                (string_fragment
+                  (unescaped_string_fragment))
+                (interpolator
+                  (qualified_identifier
+                    (lowercase_identifier)))))))))))
+
+================================================================================
+bytes literal
+================================================================================
+fn init {
+  let b1 = b"a"
+  println(b1.to_int())
+  println(b"asdfasdf")
+}
+--------------------------------------------------------------------------------
+
+(structure
+  (function_definition
+    (function_identifier
+      (lowercase_identifier))
+    (block_expression
+      (let_expression
+        (lowercase_identifier)
+        (atomic_expression
+          (literal
+            (bytes_literal
+              (string_fragment
+                (unescaped_string_fragment))))))
+      (apply_expression
+        (qualified_identifier
+          (lowercase_identifier))
+        (arguments
+          (argument
+            (dot_apply_expression
+              (qualified_identifier
+                (lowercase_identifier))
+              (dot_identifier
+                (dot_lowercase_identifier))))))
+      (apply_expression
+        (qualified_identifier
+          (lowercase_identifier))
+        (arguments
+          (argument
+            (atomic_expression
+              (literal
+                (bytes_literal
+                  (string_fragment
+                    (unescaped_string_fragment)))))))))))
+
+================================================================================
+integer literal
+================================================================================
+fn main {
+  let a = 1
+  let b = 1U
+  let c = 1L
+  let d = 1UL
+  let a = 0x9E3779B1
+  let a = 0x85EBCA77
+  let a = 0xC2B2AE3D
+  let a = 0x27D4EB2F
+  let a = 0x165667B1
+}
+--------------------------------------------------------------------------------
+
+(structure
+  (function_definition
+    (function_identifier
+      (lowercase_identifier))
+    (block_expression
+      (let_expression
+        (lowercase_identifier)
+        (atomic_expression
+          (literal
+            (integer_literal))))
+      (let_expression
+        (lowercase_identifier)
+        (atomic_expression
+          (literal
+            (integer_literal))))
+      (let_expression
+        (lowercase_identifier)
+        (atomic_expression
+          (literal
+            (integer_literal))))
+      (let_expression
+        (lowercase_identifier)
+        (atomic_expression
+          (literal
+            (integer_literal))))
+      (let_expression
+        (lowercase_identifier)
+        (atomic_expression
+          (literal
+            (integer_literal))))
+      (let_expression
+        (lowercase_identifier)
+        (atomic_expression
+          (literal
+            (integer_literal))))
+      (let_expression
+        (lowercase_identifier)
+        (atomic_expression
+          (literal
+            (integer_literal))))
+      (let_expression
+        (lowercase_identifier)
+        (atomic_expression
+          (literal
+            (integer_literal))))
+      (let_expression
+        (lowercase_identifier)
+        (atomic_expression
+          (literal
+            (integer_literal)))))))
+
+================================================================================
+bigint literal
+================================================================================
+fn main {
+  let a = 0N
+  let b = 0x1aN
+  let c = 0b100N
+  let d = 0o1237N
+}
+--------------------------------------------------------------------------------
+
+(structure
+  (function_definition
+    (function_identifier
+      (lowercase_identifier))
+    (block_expression
+      (let_expression
+        (lowercase_identifier)
+        (atomic_expression
+          (literal
+            (integer_literal))))
+      (let_expression
+        (lowercase_identifier)
+        (atomic_expression
+          (literal
+            (integer_literal))))
+      (let_expression
+        (lowercase_identifier)
+        (atomic_expression
+          (literal
+            (integer_literal))))
+      (let_expression
+        (lowercase_identifier)
+        (atomic_expression
+          (literal
+            (integer_literal)))))))
+
+================================================================================
+float literal
+================================================================================
+fn main {
+  let a = 0.01
+  let b = 0.0
+  let c = 0x0.1Fp+0
+  let d = 0.1e3
+  let array = [
+    0x1.661ec79f8f3bep+0, 0x1.571ed4aaf883dp+0, 0x1.49539f0f010bp+0, 0x1.3c995b0b80385p+0,
+    0x1.30d190c8864a5p+0, 0x1.25e227b0b8eap+0, 0x1.1bb4a4a1a343fp+0, 0x1.12358f08ae5bap+0,
+    0x1.0953f419900a7p+0, 0x1.0p+0, 0x1.e608cfd9a47acp-1, 0x1.ca4b31f026aap-1, 0x1.b2036576afce6p-1,
+    0x1.9c2d163a1aa2dp-1, 0x1.886e6037841edp-1, 0x1.767dcf5534862p-1,
+  ]
+  let a = 0.01F
+  let b = 0.0F
+  let c = 0x0.1Fp+0F
+  let d = 0.1e3F
+  let array = [
+    0x1.661ec79f8f3bep+0F, 0x1.571ed4aaf883dp+0F, 0x1.49539f0f010bp+0F, 0x1.3c995b0b80385p+0F,
+    0x1.30d190c8864a5p+0F, 0x1.25e227b0b8eap+0F, 0x1.1bb4a4a1a343fp+0F, 0x1.12358f08ae5bap+0F,
+    0x1.0953f419900a7p+0F, 0x1.0p+0F, 0x1.e608cfd9a47acp-1F, 0x1.ca4b31f026aap-1F, 0x1.b2036576afce6p-1F,
+    0x1.9c2d163a1aa2dp-1F, 0x1.886e6037841edp-1F, 0x1.767dcf5534862p-1F,
+  ]
+}
+--------------------------------------------------------------------------------
+
+(structure
+  (function_definition
+    (function_identifier
+      (lowercase_identifier))
+    (block_expression
+      (let_expression
+        (lowercase_identifier)
+        (atomic_expression
+          (literal
+            (double_literal))))
+      (let_expression
+        (lowercase_identifier)
+        (atomic_expression
+          (literal
+            (double_literal))))
+      (let_expression
+        (lowercase_identifier)
+        (atomic_expression
+          (literal
+            (double_literal))))
+      (let_expression
+        (lowercase_identifier)
+        (atomic_expression
+          (literal
+            (double_literal))))
+      (let_expression
+        (lowercase_identifier)
+        (array_expression
+          (atomic_expression
+            (literal
+              (double_literal)))
+          (atomic_expression
+            (literal
+              (double_literal)))
+          (atomic_expression
+            (literal
+              (double_literal)))
+          (atomic_expression
+            (literal
+              (double_literal)))
+          (atomic_expression
+            (literal
+              (double_literal)))
+          (atomic_expression
+            (literal
+              (double_literal)))
+          (atomic_expression
+            (literal
+              (double_literal)))
+          (atomic_expression
+            (literal
+              (double_literal)))
+          (atomic_expression
+            (literal
+              (double_literal)))
+          (atomic_expression
+            (literal
+              (double_literal)))
+          (atomic_expression
+            (literal
+              (double_literal)))
+          (atomic_expression
+            (literal
+              (double_literal)))
+          (atomic_expression
+            (literal
+              (double_literal)))
+          (atomic_expression
+            (literal
+              (double_literal)))
+          (atomic_expression
+            (literal
+              (double_literal)))
+          (atomic_expression
+            (literal
+              (double_literal)))))
+      (let_expression
+        (lowercase_identifier)
+        (atomic_expression
+          (literal
+            (float_literal))))
+      (let_expression
+        (lowercase_identifier)
+        (atomic_expression
+          (literal
+            (float_literal))))
+      (let_expression
+        (lowercase_identifier)
+        (atomic_expression
+          (literal
+            (float_literal))))
+      (let_expression
+        (lowercase_identifier)
+        (atomic_expression
+          (literal
+            (float_literal))))
+      (let_expression
+        (lowercase_identifier)
+        (array_expression
+          (atomic_expression
+            (literal
+              (float_literal)))
+          (atomic_expression
+            (literal
+              (float_literal)))
+          (atomic_expression
+            (literal
+              (float_literal)))
+          (atomic_expression
+            (literal
+              (float_literal)))
+          (atomic_expression
+            (literal
+              (float_literal)))
+          (atomic_expression
+            (literal
+              (float_literal)))
+          (atomic_expression
+            (literal
+              (float_literal)))
+          (atomic_expression
+            (literal
+              (float_literal)))
+          (atomic_expression
+            (literal
+              (float_literal)))
+          (atomic_expression
+            (literal
+              (float_literal)))
+          (atomic_expression
+            (literal
+              (float_literal)))
+          (atomic_expression
+            (literal
+              (float_literal)))
+          (atomic_expression
+            (literal
+              (float_literal)))
+          (atomic_expression
+            (literal
+              (float_literal)))
+          (atomic_expression
+            (literal
+              (float_literal)))
+          (atomic_expression
+            (literal
+              (float_literal))))))))
+
+================================================================================
+Bytes interpolation
+================================================================================
+fn main {
+  let bytes = b"value=\{value}, next=\{next()}"
+}
+--------------------------------------------------------------------------------
+
+(structure
+  (function_definition
+    (function_identifier
+      (lowercase_identifier))
+    (block_expression
+      (let_expression
+        (lowercase_identifier)
+        (atomic_expression
+          (string_interpolation
+            (string_fragment
+              (unescaped_string_fragment))
+            (interpolator
+              (qualified_identifier
+                (lowercase_identifier)))
+            (string_fragment
+              (unescaped_string_fragment))
+            (interpolator
+              (apply_expression
+                (qualified_identifier
+                  (lowercase_identifier))
+                (arguments)))))))))
