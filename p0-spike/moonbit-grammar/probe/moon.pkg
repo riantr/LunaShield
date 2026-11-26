@@ -1,0 +1,9 @@
+import {
+  "moonbit-community/treesitter" @treesitter,
+  "spike/moonbit-grammar/pkg" @pkg,
+  "moonbitlang/core/encoding/utf8",
+}
+
+pkgtype(kind: "executable")
+
+supported_targets = "+native"
