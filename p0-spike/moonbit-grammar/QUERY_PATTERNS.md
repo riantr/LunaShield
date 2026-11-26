@@ -41,7 +41,9 @@ pkg text_equals "@fs"
 fn  text_equals ".read_file"
 ```
 
-- 要捕获第 2 个参数：把 `. (argument) @arg` 改成 `(argument) _ . (argument) @arg`
+- 要捕获第 2 个参数（已实测，两种写法等价）：
+  `(arguments (argument) . (argument) @arg)` 或
+  `(arguments (argument) _ . (argument) @arg)`，都只命中 `data` 一个 match
 - 要捕获整个参数列表：把 `(arguments . (argument) @arg)` 改成 `(arguments) @args`
 - taint sink 的 `capture` 填 `"arg"`
 
@@ -69,13 +71,60 @@ fn  text_equals ".read_file"
 谓词：`name contains "KEY"` / `name contains "SECRET"` / `name contains "TOKEN"`，
 或 `str has_prefix "sk_"`。primary 是 `@name`（index 0），snippet 是常量名。
 
-## 尚未验证、写规则前需补探针的模式
+## 补充的四个实测模板（第二批探针，11/11 PASS）
 
-- 字符串插值内的污点（`"..." + id` 的 `binary_expression` 已验证可命中；
-  MoonBit 的 `\{expr}` 插值节点 `string_interpolation` 还没测）
-- `@fs.write_file(path, data)` 第 2 参数的锚定写法
-- 多行字符串 `#|...|#` 内的硬编码密钥
-- `try_catch_expression` 的空 catch 检测（模板待设计）
+### 模板 D：字符串插值污点（`"id=\{id}"`）
+
+```
+(string_interpolation (interpolator (qualified_identifier (lowercase_identifier) @var))) @str
+```
+
+- `@str` 文本是整段含引号的字面量 `"id=\{id}"`，`@var` 是 `id`。
+- 对应 MB002/MB007 的污点路径：sink capture 填 `"str"`，source 声明 identifier
+  `id`；注入的插值表达式还可来自 method/apply 节点，把
+  `(qualified_identifier (lowercase_identifier) @var)` 换成 `(_) @var` 即可泛化。
+- 注意 MoonBit 源码里反斜杠要写 `\\{id}`，query 里节点名是 `string_interpolation`
+  / `interpolator`（`grammar.json` 中 `interpolator` = `\{` + expression + `}`）。
+
+### 模板 E：多行字符串密钥（`const KEY : String = #|...|#`）
+
+```
+(const_definition
+  (uppercase_identifier) @name
+  (type_annotation)
+  (atomic_expression (literal
+    (multiline_string_literal (multiline_string_fragment (multiline_string_content) @secret))))) @decl
+```
+
+- **坑**：`@secret` 文本是 `sk_live_1234567890|#`，**带闭合符 `|#`**
+  （`multiline_string_content` 是 `[^\n]*`，贪心吃到行尾）。不能对 @secret 做
+  `text_equals`/`has_suffix` 判断完整密钥；用 `has_prefix "sk_"` 或
+  `contains "sk_live_"` 这类前缀/包含谓词。
+- 普通双引号密钥走模板 C，`@str` 不带闭合符。
+
+### 模板 F：空 catch（`try { ... } catch { }`）
+
+```
+((try_catch_clause) @catch (#not-match? @catch "=>"))
+```
+
+- `case_clause` 语法必含 `=>`，所以"没有 `=>`"等价于"没有 case 分支"，
+  即空 catch。实测：空 catch 命中 1，带 `e => println(e)` 命中 0。
+- **坑**：谓词必须和 capture 一起包在**外层括号**里。写成
+  `(try_catch_clause) @catch (#not-match? @catch "=>")` 会把 predicate 拆成
+  独立 pattern，结果匹配树上每个节点（实测空 catch 24 个 match、非空 36 个）。
+- 引擎侧不需要改谓词白名单：`#not-match?` 是 query 字符串里的原生谓词，
+  `Query::new` 自身解析并应用。
+
+### 模板 G：第二参数锚定的两种写法（都已实测）
+
+```
+(arguments (argument) . (argument) @arg)
+(arguments (argument) _ . (argument) @arg)
+```
+
+两者都精确命中 `@fs.write_file(path, data)` 的 `data`，各产生 1 个 match，
+capture 文本一致。文档早期推测第二种写法会落空，实测证伪。
 
 ## 复现
 
@@ -83,5 +132,5 @@ fn  text_equals ".read_file"
 cd p0-spike/moonbit-grammar
 moon build --target native probe
 ./_build/native/debug/build/probe/probe.exe
-# PROBE TOTAL=5 PASS=5 FAIL=0
+# PROBE TOTAL=11 PASS=11 FAIL=0
 ```

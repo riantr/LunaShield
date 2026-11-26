@@ -23,7 +23,7 @@
 | `corpus/cases.json` | 从官方 `test/corpus/{asi,for,literal}.txt` 提取的 31 个用例 |
 | `grammar/grammar.json` | 上游 grammar（319 KB，用于重生成 tables） |
 | `node-types.json` | 上游节点类型（392 项，257 named，全部无 fields） |
-| `probe/main.mbt` | query 探针：验证 capture 稳定性 / 位置锚点 / 谓词区分 |
+| `probe/main.mbt` | 11 个 query 探针：capture 稳定性 / 位置锚点 / 插值 / 多行串 / 空 catch |
 | `QUERY_PATTERNS.md` | 规则 query 模板（探针实测结论，写规则前必读） |
 
 ## 复现
@@ -32,7 +32,7 @@
 
 ```sh
 moon run --target native verify      # 期望: TOTAL=31 OK=31 ERR=0
-moon run --target native probe       # 期望: PROBE TOTAL=5 PASS=5 FAIL=0
+moon run --target native probe       # 期望: PROBE TOTAL=11 PASS=11 FAIL=0
 ```
 
 重新生成解析表（仅在 grammar.json 变更时需要）：
@@ -55,3 +55,5 @@ moon run --target native bin
   query 必须按 `QUERY_PATTERNS.md` 的位置锚点模板写；`@call` 的 capture index
   最大，engine 的 primary 会落在第一个子 capture（如 `@pkg`），与现有 JS 规则
   primary=callee 行为一致。
+- 三个实测坑已记入 `QUERY_PATTERNS.md`：`fn` capture 带前导点、多行串 content
+  带闭合 `|#`、原生谓词必须和 capture 包在同一对外层括号内。
