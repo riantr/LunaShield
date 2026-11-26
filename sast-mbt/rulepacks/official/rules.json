@@ -1197,5 +1197,279 @@
     ],
     "message": "Secret material stored in plaintext configuration",
     "enabled": true
+  },
+  {
+    "id": "MB001",
+    "language": "moonbit",
+    "severity": "high",
+    "cwe": [
+      78
+    ],
+    "owasp": [
+      "A03:2021"
+    ],
+    "query": "(apply_expression (qualified_identifier (package_identifier) @pkg (dot_lowercase_identifier) @fn) (arguments . (argument) @arg)) @call",
+    "predicates": [
+      {
+        "kind": "text_equals",
+        "capture": "pkg",
+        "value": "@process"
+      },
+      {
+        "kind": "text_equals",
+        "capture": "fn",
+        "value": ".run"
+      },
+      {
+        "kind": "not_has_prefix",
+        "capture": "arg",
+        "value": "\""
+      }
+    ],
+    "message": "Command injection: process.run with untrusted command",
+    "enabled": true
+  },
+  {
+    "id": "MB002",
+    "language": "moonbit",
+    "severity": "high",
+    "cwe": [
+      22
+    ],
+    "owasp": [
+      "A01:2021"
+    ],
+    "query": "(apply_expression (qualified_identifier (package_identifier) @pkg (dot_lowercase_identifier) @fn) (arguments . (argument) @arg)) @call",
+    "predicates": [
+      {
+        "kind": "text_equals",
+        "capture": "pkg",
+        "value": "@fs"
+      },
+      {
+        "kind": "text_equals",
+        "capture": "fn",
+        "value": ".read_file"
+      }
+    ],
+    "message": "Path traversal: fs.read_file with untrusted path",
+    "enabled": true
+  },
+  {
+    "id": "MB003",
+    "language": "moonbit",
+    "severity": "high",
+    "cwe": [
+      798
+    ],
+    "owasp": [
+      "A07:2021"
+    ],
+    "query": "(const_definition (uppercase_identifier) @name (type_annotation) (atomic_expression (literal (string_literal) @str))) @decl",
+    "predicates": [
+      {
+        "kind": "contains",
+        "capture": "name",
+        "value": "KEY"
+      },
+      {
+        "kind": "has_prefix",
+        "capture": "str",
+        "value": "\"sk_"
+      }
+    ],
+    "message": "Hardcoded API key in const definition",
+    "enabled": true
+  },
+  {
+    "id": "MB004",
+    "language": "moonbit",
+    "severity": "medium",
+    "cwe": [
+      328
+    ],
+    "owasp": [
+      "A02:2021"
+    ],
+    "query": "(apply_expression (qualified_identifier (package_identifier) @pkg (dot_lowercase_identifier) @fn) (arguments . (argument) @arg)) @call",
+    "predicates": [
+      {
+        "kind": "text_equals",
+        "capture": "pkg",
+        "value": "@crypto"
+      },
+      {
+        "kind": "text_equals",
+        "capture": "fn",
+        "value": ".md5"
+      }
+    ],
+    "message": "Weak hash: crypto.md5",
+    "enabled": true
+  },
+  {
+    "id": "MB005",
+    "language": "moonbit",
+    "severity": "medium",
+    "cwe": [
+      338
+    ],
+    "owasp": [
+      "A02:2021"
+    ],
+    "query": "(apply_expression (method_expression (type_name (qualified_type_identifier (package_identifier) @pkg (dot_identifier (dot_uppercase_identifier) @ty))) (lowercase_identifier) @fn) (arguments)) @call",
+    "predicates": [
+      {
+        "kind": "text_equals",
+        "capture": "pkg",
+        "value": "@random"
+      },
+      {
+        "kind": "text_equals",
+        "capture": "ty",
+        "value": ".Rand"
+      },
+      {
+        "kind": "text_equals",
+        "capture": "fn",
+        "value": "new"
+      }
+    ],
+    "message": "Weak RNG: Rand::new() (use Rand::chacha8 for tokens)",
+    "enabled": true
+  },
+  {
+    "id": "MB006",
+    "language": "moonbit",
+    "severity": "high",
+    "cwe": [
+      295
+    ],
+    "owasp": [
+      "A02:2021"
+    ],
+    "query": "(apply_expression (method_expression (type_name (qualified_type_identifier (package_identifier) @pkg (dot_identifier (dot_uppercase_identifier) @ty))) (lowercase_identifier) @fn) (arguments (argument) (argument (labelled_argument (lowercase_identifier) @label (atomic_expression (literal (boolean_literal) @val)))))) @call",
+    "predicates": [
+      {
+        "kind": "text_equals",
+        "capture": "pkg",
+        "value": "@tls"
+      },
+      {
+        "kind": "text_equals",
+        "capture": "label",
+        "value": "verify"
+      },
+      {
+        "kind": "text_equals",
+        "capture": "val",
+        "value": "false"
+      }
+    ],
+    "message": "TLS verification disabled: verify=false",
+    "enabled": true
+  },
+  {
+    "id": "MB007",
+    "language": "moonbit",
+    "severity": "medium",
+    "cwe": [
+      532
+    ],
+    "owasp": [
+      "A09:2021"
+    ],
+    "query": "(apply_expression (qualified_identifier (lowercase_identifier) @fn) (arguments . (argument (apply_expression (qualified_identifier (package_identifier) @pkg (dot_lowercase_identifier) @getter) (arguments . (argument) @key))))) @call",
+    "predicates": [
+      {
+        "kind": "text_equals",
+        "capture": "fn",
+        "value": "println"
+      },
+      {
+        "kind": "text_equals",
+        "capture": "pkg",
+        "value": "@env"
+      },
+      {
+        "kind": "text_equals",
+        "capture": "getter",
+        "value": ".get_env_var"
+      }
+    ],
+    "message": "Sensitive env value written to log",
+    "enabled": true
+  },
+  {
+    "id": "MB008",
+    "language": "moonbit",
+    "severity": "medium",
+    "cwe": [
+      1116
+    ],
+    "owasp": [
+      "A06:2021"
+    ],
+    "query": "(function_definition (external_linkage (string_literal) @lib) (function_identifier) @fn) @decl",
+    "predicates": [
+      {
+        "kind": "contains",
+        "capture": "lib",
+        "value": "\"C\""
+      }
+    ],
+    "message": "FFI boundary: external C linkage",
+    "enabled": true
+  },
+  {
+    "id": "MB009",
+    "language": "moonbit",
+    "severity": "medium",
+    "cwe": [
+      327
+    ],
+    "owasp": [
+      "A02:2021"
+    ],
+    "query": "(apply_expression (qualified_identifier (package_identifier) @pkg (dot_lowercase_identifier) @fn) (arguments (argument) (argument) (argument (labelled_argument (lowercase_identifier) @label (constructor_expression (uppercase_identifier) @alg))))) @call",
+    "predicates": [
+      {
+        "kind": "text_equals",
+        "capture": "pkg",
+        "value": "@crypto"
+      },
+      {
+        "kind": "text_equals",
+        "capture": "fn",
+        "value": ".hmac"
+      },
+      {
+        "kind": "text_equals",
+        "capture": "label",
+        "value": "digest"
+      },
+      {
+        "kind": "text_equals",
+        "capture": "alg",
+        "value": "MD5"
+      }
+    ],
+    "message": "Weak HMAC digest: MD5",
+    "enabled": true
+  },
+  {
+    "id": "MB010",
+    "language": "moonbit",
+    "severity": "low",
+    "cwe": [
+      390
+    ],
+    "owasp": [
+      "A09:2021"
+    ],
+    "query": "((try_catch_clause) @catch (#not-match? @catch \"=>\"))",
+    "predicates": [],
+    "message": "Exception swallowed by empty catch",
+    "enabled": true
   }
 ]

@@ -37,7 +37,7 @@ echo "==> [8/11] cram end-to-end (must pass the tests directory explicitly)"
 moon build --target native apps/scan
 moon cram test tests/cram/
 
-echo "==> [9/11] golden rulepack check (50 rules, detection/FP thresholds)"
+echo "==> [9/11] golden rulepack check (60 rules, detection/FP thresholds)"
 $PY scripts/gen_rulepack.py --check
 $PY scripts/check_golden.py
 

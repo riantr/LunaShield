@@ -1,0 +1,3 @@
+fn main {
+  @process.run("ls", args)
+}

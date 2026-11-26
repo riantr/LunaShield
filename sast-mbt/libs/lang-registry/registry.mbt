@@ -64,7 +64,9 @@ pub fn normalize_extension(ext : String) -> String {
 }
 
 ///|
-/// All six MVP language registrations (see MVP spec §1.3).
+/// All registered languages: the six MVP grammars plus MoonBit (P4).
+/// MoonBit uses a locally vendored binding (see `grammars/moonbit`), so its
+/// constructor is `@tsmb.language` rather than a mooncakes package export.
 pub fn all_language_specs() -> Array[LanguageSpec] {
   [
     spec("javascript", ["js", "jsx", "mjs", "cjs"], () => @tsjs.language()),
@@ -73,6 +75,7 @@ pub fn all_language_specs() -> Array[LanguageSpec] {
     spec("python", ["py"], () => @tspy.language()),
     spec("java", ["java"], () => @tsjava.language()),
     spec("json", ["json"], () => @tsjson.language()),
+    spec("moonbit", ["mb"], () => @tsmb.language()),
   ]
 }
 

@@ -76,8 +76,11 @@ moon run --target native bin
 - 上游 `bindings/` 只有 C/Go/Node/Python/Rust/Zig，无 MoonBit 绑定；
   `moonbit-community/tree_sitter_mbt` 是空仓库。本 spike 的绑定是自制的。
 - C 侧 `iswblank`（空格/制表）在 MoonBit ctype 中缺失，已在 scanner.mbt 内自建。
-- 本 spike 未并入主 workspace（`sast-mbt/moon.work`），是独立模块，不影响现有 11 步验收。
-- 若要产品化，下一步是规则集设计（MoonBit 生态危险 API），那是比 scanner 更大的工作量。
+- 本 spike 仍是独立模块；其产物已产品化并入主工程：`grammars/moonbit/`（绑定 +
+  scanner + tables）、`lang-registry` 的 `moonbit`/`.mb` 注册、官方规则包 MB001–MB010
+  与 `taint.json` 的 moonbit 块。主工程 11 步验收已覆盖（golden 60/60、分片等价）。
+- 规则集设计（MoonBit 生态危险 API）已落地首批 10 条；后续扩容仍以
+  `QUERY_PATTERNS.md` 的位置锚点模板为准。
 - query 探针已确认 tree-sitter Query 可用，但 grammar 无 named field，
   query 必须按 `QUERY_PATTERNS.md` 的位置锚点模板写；`@call` 的 capture index
   最大，engine 的 primary 会落在第一个子 capture（如 `@pkg`），与现有 JS 规则

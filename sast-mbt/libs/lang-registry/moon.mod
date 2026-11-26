@@ -8,6 +8,7 @@ source = ""
 
 import {
   "moonbit-community/treesitter@0.1.1",
+  "sast/lang-moonbit@0.1.0",
   "moonbit-community/tree-sitter-javascript@0.25.0",
   "moonbit-community/tree-sitter-typescript@0.23.2",
   "moonbit-community/tree-sitter-python@0.23.6",

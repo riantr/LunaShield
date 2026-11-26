@@ -94,6 +94,18 @@ b.js:1:19 JS001 [high] eval
 warnings: 0
 ```
 
+## MoonBit `.mb` file is scanned with the vendored grammar
+
+```mooncram
+$ mkdir -p mb && printf '%s' '[{"id":"MB001","language":"moonbit","severity":"high","cwe":[78],"owasp":["A03:2021"],"query":"(apply_expression (qualified_identifier (package_identifier) @pkg (dot_lowercase_identifier) @fn) (arguments . (argument) @arg)) @call","predicates":[{"kind":"text_equals","capture":"pkg","value":"@process"},{"kind":"text_equals","capture":"fn","value":".run"},{"kind":"not_has_prefix","capture":"arg","value":"\""}],"message":"Command injection: process.run with untrusted command","enabled":true}]' > rules.json && printf 'fn main {\n  @process.run(cmd, args)\n}\n' > mb/a.mb && scan.exe mb --rules rules.json --format console
+LunaShield 0.1.0
+files: 1 scanned, 0 skipped, 1 raw hits
+findings: 1 (critical 0, high 1, medium 0, low 0, info 0)
+a.mb:2:3 MB001 [high] Command injection: process.run with untrusted command
+warnings: 0
+[1]
+```
+
 ## Invalid `--taint` mode is an argument error
 
 ```mooncram

@@ -5,7 +5,7 @@
 ///|
 /// Language registration keys from the MVP spec §1.3.
 pub fn registered_languages() -> Array[String] {
-  ["javascript", "typescript", "tsx", "python", "java", "json"]
+  ["javascript", "typescript", "tsx", "python", "java", "json", "moonbit"]
 }
 
 ///|
@@ -17,6 +17,7 @@ fn id_prefix(lang : String) -> String? {
     "python" => Some("PY")
     "java" => Some("JAVA")
     "json" => Some("CFG")
+    "moonbit" => Some("MB")
     _ => None
   }
 }

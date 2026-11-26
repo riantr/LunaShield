@@ -3,7 +3,7 @@
 
 ///|
 /// Primary fixture extension for a language, taken from the single source of
-/// truth in `lang-registry` (M2) so the six registrations cannot drift.
+/// truth in `lang-registry` (M2) so all registrations cannot drift.
 fn fixture_extension(lang : String) -> String {
   match @lang.spec_by_id(lang) {
     Some(spec) =>

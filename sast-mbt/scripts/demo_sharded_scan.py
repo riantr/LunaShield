@@ -8,7 +8,7 @@ Builds the binary if needed, then shows:
   4. the observed speedup
 
 The speedup comes from grammar cold start: each shard materializes only its
-own grammar (~233ms) instead of all six (~1.33s). Single-language corpora have
+own grammar (~233ms) instead of all seven (~1.56s). Single-language corpora have
 no gain, and total CPU is unchanged -- only wall time improves when the shards
 run concurrently.
 
@@ -20,7 +20,7 @@ Usage:
   target-dir  directory to scan (default: tests/fixtures)
   --out       where baseline/ + merged/ reports are kept
               (default: .tmp-sharded-demo; removed with `rm -rf`)
-  --langs     override the six default language ids
+  --langs     override the seven default language ids
   everything else is forwarded to scan.exe
 
 Examples:
@@ -39,7 +39,7 @@ from pathlib import Path
 from merge_reports import merge, write_report
 
 ROOT = Path(__file__).resolve().parent.parent
-DEFAULT_LANGS = "javascript,typescript,tsx,python,java,json"
+DEFAULT_LANGS = "javascript,typescript,tsx,python,java,json,moonbit"
 
 
 def find_exe() -> Path:

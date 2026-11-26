@@ -2,7 +2,7 @@
 """Sharded scan by language: one `scan --lang <id>` process per language, then
 merge into a single byte-identical findings.json.
 
-Why: each process materializes only its own grammar (~233ms) instead of all six
+Why: each process materializes only its own grammar (~233ms) instead of all seven
 (~1.33s). On a multi-language cold scan this is ~2.5x end to end. Total CPU is
 unchanged; single-language corpora see no benefit.
 
@@ -13,7 +13,7 @@ Usage:
   python3 scripts/scan_by_lang.py <root> [--out <dir>] [--langs <csv>] [scan opts...]
 
   --out <dir>     write merged findings.json into <dir> (default: stdout)
-  --langs <csv>   override the six default language ids
+  --langs <csv>   override the seven default language ids
   everything else is passed through to scan.exe (e.g. --rules, --taint,
   --incremental, --cache-dir, --ignore). --format is forced to json because
   the merger needs structured reports; --fail-on is forced to never so a
@@ -30,7 +30,7 @@ from merge_reports import merge, write_report
 
 ROOT = Path(__file__).resolve().parent.parent
 EXE = ROOT / "_build/native/debug/build/sast/scan/scan.exe"
-DEFAULT_LANGS = "javascript,typescript,tsx,python,java,json"
+DEFAULT_LANGS = "javascript,typescript,tsx,python,java,json,moonbit"
 
 
 def passthrough(argv: list[str]) -> list[str]:

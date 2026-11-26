@@ -1,5 +1,6 @@
 import {
   "moonbit-community/treesitter",
+  "sast/lang-moonbit" @tsmb,
   "moonbit-community/tree-sitter-javascript" @tsjs,
   "moonbit-community/tree-sitter-typescript" @tsts,
   "moonbit-community/tree-sitter-python" @tspy,

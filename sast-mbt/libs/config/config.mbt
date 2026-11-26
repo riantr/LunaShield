@@ -64,7 +64,7 @@ pub(all) struct ScanConfig {
 ///|
 /// All registered language keys, used as the default language filter.
 pub fn all_languages() -> Array[String] {
-  ["javascript", "typescript", "tsx", "python", "java", "json"]
+  ["javascript", "typescript", "tsx", "python", "java", "json", "moonbit"]
 }
 
 ///|

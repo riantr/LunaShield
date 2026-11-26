@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Generate the official M5 rule pack (50 rules) and its fixtures.
+"""Generate the official rule pack (60 rules: 50 MVP + 10 MoonBit) and fixtures.
 
 One-off authoring helper: the generated `rules.json` and fixtures are the
-committed source of truth, this script only makes it feasible to write 50 rules
-plus 150 fixture files without copy-paste drift. Re-run after editing the table.
+committed source of truth, this script only makes it feasible to write 60 rules
+plus 180 fixture files without copy-paste drift. Re-run after editing the table.
 
 Usage:
     python3 scripts/gen_rulepack.py            # write files
@@ -42,6 +42,14 @@ JAVA_LOCAL_STR = '(local_variable_declaration declarator: (variable_declarator n
 JSON_PAIR_STR = '(pair key: (string) @key value: (string) @val) @pair'
 JSON_PAIR_TRUE = '(pair key: (string) @key value: (true) @val) @pair'
 JSON_PAIR_FALSE = '(pair key: (string) @key value: (false) @val) @pair'
+MB_CALL_PKG = '(apply_expression (qualified_identifier (package_identifier) @pkg (dot_lowercase_identifier) @fn) (arguments . (argument) @arg)) @call'
+MB_RAND_METHOD = '(apply_expression (method_expression (type_name (qualified_type_identifier (package_identifier) @pkg (dot_identifier (dot_uppercase_identifier) @ty))) (lowercase_identifier) @fn) (arguments)) @call'
+MB_TLS_VERIFY = '(apply_expression (method_expression (type_name (qualified_type_identifier (package_identifier) @pkg (dot_identifier (dot_uppercase_identifier) @ty))) (lowercase_identifier) @fn) (arguments (argument) (argument (labelled_argument (lowercase_identifier) @label (atomic_expression (literal (boolean_literal) @val)))))) @call'
+MB_ENV_LOG = '(apply_expression (qualified_identifier (lowercase_identifier) @fn) (arguments . (argument (apply_expression (qualified_identifier (package_identifier) @pkg (dot_lowercase_identifier) @getter) (arguments . (argument) @key))))) @call'
+MB_CONST_STR = '(const_definition (uppercase_identifier) @name (type_annotation) (atomic_expression (literal (string_literal) @str))) @decl'
+MB_EXTERN = '(function_definition (external_linkage (string_literal) @lib) (function_identifier) @fn) @decl'
+MB_HMAC = '(apply_expression (qualified_identifier (package_identifier) @pkg (dot_lowercase_identifier) @fn) (arguments (argument) (argument) (argument (labelled_argument (lowercase_identifier) @label (constructor_expression (uppercase_identifier) @alg))))) @call'
+MB_EMPTY_CATCH = '((try_catch_clause) @catch (#not-match? @catch "=>"))'
 
 QUOTE = '"'
 
@@ -417,6 +425,82 @@ RULES = [
         '{\n  "client_secret": "s3cr3t-value",\n  "name": "svc"\n}',
         '{\n  "vaultRef": "vault:svc/credential",\n  "name": "svc"\n}',
     ),
+    # ---- MoonBit (MB001-MB010): first-batch rules from the P4 spike ----
+    (
+        "MB001", "moonbit", "high", [78], ["A03:2021"], MB_CALL_PKG,
+        [p("text_equals", "pkg", "@process"), p("text_equals", "fn", ".run"),
+         p("not_has_prefix", "arg", QUOTE)],
+        "Command injection: process.run with untrusted command",
+        'fn main {\n  @process.run(cmd, args)\n}\n',
+        'fn main {\n  @process.run("ls", args)\n}\n',
+    ),
+    (
+        "MB002", "moonbit", "high", [22], ["A01:2021"], MB_CALL_PKG,
+        [p("text_equals", "pkg", "@fs"), p("text_equals", "fn", ".read_file")],
+        "Path traversal: fs.read_file with untrusted path",
+        'fn main {\n  let d = @fs.read_file(path)\n}\n',
+        'fn main {\n  let d = @fs.write_file(path, data)\n}\n',
+    ),
+    (
+        "MB003", "moonbit", "high", [798], ["A07:2021"], MB_CONST_STR,
+        [p("contains", "name", "KEY"), p("has_prefix", "str", '"sk_')],
+        "Hardcoded API key in const definition",
+        'const API_KEY : String = "sk_live_1234567890"\n',
+        'const API_KEY : String = "production"\n',
+    ),
+    (
+        "MB004", "moonbit", "medium", [328], ["A02:2021"], MB_CALL_PKG,
+        [p("text_equals", "pkg", "@crypto"), p("text_equals", "fn", ".md5")],
+        "Weak hash: crypto.md5",
+        'fn main {\n  let h = @crypto.md5(data)\n}\n',
+        'fn main {\n  let h = @crypto.sha256(data)\n}\n',
+    ),
+    (
+        "MB005", "moonbit", "medium", [338], ["A02:2021"], MB_RAND_METHOD,
+        [p("text_equals", "pkg", "@random"), p("text_equals", "ty", ".Rand"),
+         p("text_equals", "fn", "new")],
+        "Weak RNG: Rand::new() (use Rand::chacha8 for tokens)",
+        'fn main {\n  let r = @random.Rand::new()\n}\n',
+        'fn main {\n  let r = @random.Rand::chacha8()\n}\n',
+    ),
+    (
+        "MB006", "moonbit", "high", [295], ["A02:2021"], MB_TLS_VERIFY,
+        [p("text_equals", "pkg", "@tls"), p("text_equals", "label", "verify"),
+         p("text_equals", "val", "false")],
+        "TLS verification disabled: verify=false",
+        'fn main {\n  let t = @tls.Tls::client(inner, verify=false)\n}\n',
+        'fn main {\n  let t = @tls.Tls::client(inner, verify=true)\n}\n',
+    ),
+    (
+        "MB007", "moonbit", "medium", [532], ["A09:2021"], MB_ENV_LOG,
+        [p("text_equals", "fn", "println"), p("text_equals", "pkg", "@env"),
+         p("text_equals", "getter", ".get_env_var")],
+        "Sensitive env value written to log",
+        'fn main {\n  println(@env.get_env_var("TOKEN"))\n}\n',
+        'fn main {\n  println("constant")\n}\n',
+    ),
+    (
+        "MB008", "moonbit", "medium", [1116], ["A06:2021"], MB_EXTERN,
+        [p("contains", "lib", '"C"')],
+        "FFI boundary: external C linkage",
+        'extern "C"\nfn c_func() -> Int\n',
+        'fn pure_fn() -> Int {\n  42\n}\n',
+    ),
+    (
+        "MB009", "moonbit", "medium", [327], ["A02:2021"], MB_HMAC,
+        [p("text_equals", "pkg", "@crypto"), p("text_equals", "fn", ".hmac"),
+         p("text_equals", "label", "digest"), p("text_equals", "alg", "MD5")],
+        "Weak HMAC digest: MD5",
+        'fn main {\n  let m = @crypto.hmac(data, key, digest=MD5)\n}\n',
+        'fn main {\n  let m = @crypto.hmac(data, key, digest=SHA256)\n}\n',
+    ),
+    (
+        "MB010", "moonbit", "low", [390], ["A09:2021"], MB_EMPTY_CATCH,
+        [],
+        "Exception swallowed by empty catch",
+        'fn main {\n  try { risky() } catch { }\n}\n',
+        'fn main {\n  try { risky() } catch { e => println(e) }\n}\n',
+    ),
 ]
 
 EXT = {
@@ -426,16 +510,19 @@ EXT = {
     "python": "py",
     "java": "java",
     "json": "json",
+    "moonbit": "mb",
 }
+
+# MoonBit snippets are already complete source files; only two put the
+# offending node on line 1 instead of line 2.
+MB_POSITIVE_LINES = {"MB003": 1, "MB008": 1}
 
 
 def wrap(language: str, body: str) -> str:
     """Wrap a vulnerable/safe snippet into a compilable file."""
     if language == "java":
         return "class Probe {\n  void run(String input, String userInput, String payload) { %s }\n}\n" % body
-    if language == "json":
-        return body + "\n"
-    return body + "\n"
+    return body if body.endswith("\n") else body + "\n"
 
 
 def rule_json(entry) -> dict:
@@ -478,7 +565,9 @@ def build():
         base = FIXTURES / rid
         files[base / ("positive." + ext)] = wrap(lang, pos)
         files[base / ("negative." + ext)] = wrap(lang, neg)
-        first_line = 2 if lang in ("java", "json") else 1
+        first_line = MB_POSITIVE_LINES.get(
+            rid, 2 if lang in ("java", "json", "moonbit") else 1
+        )
         expected = {
             "rule_id": rid,
             "positive_findings": 1,

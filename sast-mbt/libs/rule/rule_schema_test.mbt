@@ -141,6 +141,7 @@ test "validate: rule ID prefixes cover every registered language" {
   assert_true(@rule.valid_rule_id("PY001", "python"))
   assert_true(@rule.valid_rule_id("JAVA001", "java"))
   assert_true(@rule.valid_rule_id("CFG001", "json"))
+  assert_true(@rule.valid_rule_id("MB001", "moonbit"))
   // unknown language, wrong prefix, wrong digit count, non-digits
   assert_true(!@rule.valid_rule_id("JS001", "cobol"))
   assert_true(!@rule.valid_rule_id("PY001", "javascript"))

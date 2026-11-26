@@ -11,7 +11,7 @@
 #   bash scripts/scan_by_lang.sh <root> [--out <dir>] [--langs <csv>] [scan opts...]
 #
 #   --out <dir>     write merged findings.json into <dir> (default: stdout)
-#   --langs <csv>   override the six default language ids
+#   --langs <csv>   override the seven default language ids
 #   everything else is passed through to scan.exe (e.g. --rules, --taint,
 #   --incremental, --cache-dir, --ignore). --format is forced to json because
 #   the merger needs structured reports; --fail-on is forced to never so a
@@ -23,7 +23,7 @@ cd "$ROOT"
 
 EXE="_build/native/debug/build/sast/scan/scan.exe"
 PY="$(command -v python3 || command -v python)"
-DEFAULT_LANGS="javascript,typescript,tsx,python,java,json"
+DEFAULT_LANGS="javascript,typescript,tsx,python,java,json,moonbit"
 
 usage() {
   sed -n '2,18p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'

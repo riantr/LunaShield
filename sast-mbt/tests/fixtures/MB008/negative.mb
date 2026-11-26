@@ -1,0 +1,3 @@
+fn pure_fn() -> Int {
+  42
+}

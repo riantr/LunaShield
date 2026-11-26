@@ -1,4 +1,5 @@
 members = [
+  "grammars/moonbit",
   "libs/core-model",
   "libs/rule",
   "libs/config",

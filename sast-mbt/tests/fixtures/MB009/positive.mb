@@ -1,0 +1,3 @@
+fn main {
+  let m = @crypto.hmac(data, key, digest=MD5)
+}

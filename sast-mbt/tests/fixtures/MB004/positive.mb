@@ -1,0 +1,3 @@
+fn main {
+  let h = @crypto.md5(data)
+}
