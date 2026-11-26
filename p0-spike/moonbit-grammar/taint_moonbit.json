@@ -1,0 +1,22 @@
+{
+  "languages": [
+    {
+      "language": "moonbit",
+      "sources": [
+        { "name": "env_args", "node_kind": "apply_expression", "text_contains": "@env.args" },
+        { "name": "env_var", "node_kind": "apply_expression", "text_contains": "@env.get_env_var" },
+        { "name": "env_input", "node_kind": "apply_expression", "text_contains": "input(" }
+      ],
+      "sanitizers": [
+        { "name": "path_allowlist", "callee_contains": "is_allowed_path" },
+        { "name": "strict_int", "callee_contains": "to_int" },
+        { "name": "shell_escape", "callee_contains": "escape_shell" }
+      ],
+      "sinks": [
+        { "rule_id": "MB001", "capture": "arg" },
+        { "rule_id": "MB002", "capture": "arg" },
+        { "rule_id": "MB007", "capture": "key" }
+      ]
+    }
+  ]
+}

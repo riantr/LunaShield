@@ -1,0 +1,72 @@
+[
+  {
+    "rule_id": "MB001",
+    "positive": "fn main {\n  @process.run(cmd, args)\n}\n",
+    "negative": "fn main {\n  @process.run(\"ls\", args)\n}\n",
+    "expect_positive": 1,
+    "expect_negative": 0
+  },
+  {
+    "rule_id": "MB002",
+    "positive": "fn main {\n  let d = @fs.read_file(path)\n}\n",
+    "negative": "fn main {\n  let d = @fs.write_file(path, data)\n}\n",
+    "expect_positive": 1,
+    "expect_negative": 0
+  },
+  {
+    "rule_id": "MB003",
+    "positive": "const API_KEY : String = \"sk_live_1234567890\"\n",
+    "negative": "const API_KEY : String = \"production\"\n",
+    "expect_positive": 1,
+    "expect_negative": 0
+  },
+  {
+    "rule_id": "MB004",
+    "positive": "fn main {\n  let h = @crypto.md5(data)\n}\n",
+    "negative": "fn main {\n  let h = @crypto.sha256(data)\n}\n",
+    "expect_positive": 1,
+    "expect_negative": 0
+  },
+  {
+    "rule_id": "MB005",
+    "positive": "fn main {\n  let r = @random.Rand::new()\n}\n",
+    "negative": "fn main {\n  let r = @random.Rand::chacha8()\n}\n",
+    "expect_positive": 1,
+    "expect_negative": 0
+  },
+  {
+    "rule_id": "MB006",
+    "positive": "fn main {\n  let t = @tls.Tls::client(inner, verify=false)\n}\n",
+    "negative": "fn main {\n  let t = @tls.Tls::client(inner, verify=true)\n}\n",
+    "expect_positive": 1,
+    "expect_negative": 0
+  },
+  {
+    "rule_id": "MB007",
+    "positive": "fn main {\n  println(@env.get_env_var(\"TOKEN\"))\n}\n",
+    "negative": "fn main {\n  println(\"constant\")\n}\n",
+    "expect_positive": 1,
+    "expect_negative": 0
+  },
+  {
+    "rule_id": "MB008",
+    "positive": "extern \"C\"\nfn c_func() -> Int\n",
+    "negative": "fn pure_fn() -> Int {\n  42\n}\n",
+    "expect_positive": 1,
+    "expect_negative": 0
+  },
+  {
+    "rule_id": "MB009",
+    "positive": "fn main {\n  let m = @crypto.hmac(data, key, digest=MD5)\n}\n",
+    "negative": "fn main {\n  let m = @crypto.hmac(data, key, digest=SHA256)\n}\n",
+    "expect_positive": 1,
+    "expect_negative": 0
+  },
+  {
+    "rule_id": "MB010",
+    "positive": "fn main {\n  try { risky() } catch { }\n}\n",
+    "negative": "fn main {\n  try { risky() } catch { e => println(e) }\n}\n",
+    "expect_positive": 1,
+    "expect_negative": 0
+  }
+]

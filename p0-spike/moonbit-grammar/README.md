@@ -25,6 +25,32 @@
 | `node-types.json` | 上游节点类型（392 项，257 named，全部无 fields） |
 | `probe/main.mbt` | 11 个 query 探针：capture 稳定性 / 位置锚点 / 插值 / 多行串 / 空 catch |
 | `QUERY_PATTERNS.md` | 规则 query 模板（探针实测结论，写规则前必读） |
+| `rules_moonbit.json` | 首批 10 条 MoonBit 规则（MB001–MB010，schema 与官方包一致） |
+| `rules_samples.json` | 每条规则的正例/反例源码与期望命中数 |
+| `taint_moonbit.json` | MoonBit 语言块的 source / sanitizer / sink |
+| `rules_check/main.mbt` | 规则验证：读两份 JSON，跑匹配+谓词，断言正反例命中数 |
+
+## 首批 10 条规则验证：10/10 PASS
+
+规则数据放在 `rules_moonbit.json`（唯一数据源），`rules_check` 用与
+`libs/query-engine/engine.mbt` 相同的匹配和谓词语义，对每条规则的正例与反例
+各跑一次，断言命中数等于 `rules_samples.json` 的期望值。10 条全部通过：
+
+| ID | 风险 | CWE | 反例靠什么区分 |
+|---|---|---|---|
+| MB001 | `process.run` 命令注入 | 78 | 命令是字符串字面量（`not_has_prefix '"'`） |
+| MB002 | `fs.read_file` 路径穿越 | 22 | API 换成 `write_file` |
+| MB003 | 硬编码 API key | 798 | 字符串不带 `sk_` 前缀 |
+| MB004 | `crypto.md5` 弱哈希 | 328 | API 换成 `sha256` |
+| MB005 | `Rand::new()` 弱随机 | 338 | 换成 `Rand::chacha8()` |
+| MB006 | `Tls::client(verify=false)` | 295 | `verify=true` |
+| MB007 | env 值写日志 | 532 | 参数是字面量 |
+| MB008 | `extern "C"` FFI 边界 | 1116 | 普通函数无 external_linkage |
+| MB009 | HMAC digest=MD5 | 327 | `digest=SHA256` |
+| MB010 | 空 catch 吞异常 | 390 | catch 内有 `case_clause` |
+
+规则 JSON 的字段集合、severity 取值、谓词 kind 均与官方 `rules.json` schema
+逐字段核对一致；`taint_moonbit.json` 的 sink `rule_id` 全部指向已声明规则。
 
 ## 复现
 
@@ -33,6 +59,7 @@
 ```sh
 moon run --target native verify      # 期望: TOTAL=31 OK=31 ERR=0
 moon run --target native probe       # 期望: PROBE TOTAL=11 PASS=11 FAIL=0
+moon run --target native rules_check # 期望: RULES TOTAL=10 PASS=10 FAIL=0
 ```
 
 重新生成解析表（仅在 grammar.json 变更时需要）：
