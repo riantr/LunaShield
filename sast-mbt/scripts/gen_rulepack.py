@@ -355,6 +355,8 @@ RULES = [
         'log.error("failed", e);',
     ),
     # ---- JSON configuration (CFG001-CFG010) ----
+    # CFG003 uses contains_ignore_case: CORS/header names are case-insensitive
+    # by RFC, so the fixture deliberately lowercases the key to exercise it.
     (
         "CFG001", "json", "high", [798], ["A02:2021"], JSON_PAIR_STR,
         [p("contains", "key", "password")],
@@ -371,9 +373,9 @@ RULES = [
     ),
     (
         "CFG003", "json", "high", [942], ["A05:2021"], JSON_PAIR_STR,
-        [p("contains", "key", "Origin"), p("contains", "val", "*")],
+        [p("contains_ignore_case", "key", "Origin"), p("contains", "val", "*")],
         "Permissive CORS origin",
-        '{\n  "allowedOrigin": "*",\n  "name": "svc"\n}',
+        '{\n  "allowedorigin": "*",\n  "name": "svc"\n}',
         '{\n  "allowedOrigin": "https://app.example.com",\n  "name": "svc"\n}',
     ),
     (

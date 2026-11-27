@@ -1,5 +1,9 @@
 ///|
 /// Fixed predicate whitelist. Tree-sitter native predicates live in the query string.
+///
+/// `*_ignore_case` variants fold ASCII uppercase to lowercase on both sides
+/// before comparing; non-ASCII characters are left untouched. This keeps the
+/// comparison deterministic across targets and avoids locale-dependent rules.
 #derive(Debug, Eq)
 pub(all) enum PredicateKind {
   TextEquals
@@ -10,6 +14,14 @@ pub(all) enum PredicateKind {
   NotHasSuffix
   Contains
   NotContains
+  TextEqualsIgnoreCase
+  TextNotEqualsIgnoreCase
+  HasPrefixIgnoreCase
+  NotHasPrefixIgnoreCase
+  HasSuffixIgnoreCase
+  NotHasSuffixIgnoreCase
+  ContainsIgnoreCase
+  NotContainsIgnoreCase
 }
 
 ///|
@@ -56,6 +68,14 @@ pub fn predicate_kind_from_string(s : String) -> PredicateKind? {
     "not_has_suffix" => Some(NotHasSuffix)
     "contains" => Some(Contains)
     "not_contains" => Some(NotContains)
+    "text_equals_ignore_case" => Some(TextEqualsIgnoreCase)
+    "text_not_equals_ignore_case" => Some(TextNotEqualsIgnoreCase)
+    "has_prefix_ignore_case" => Some(HasPrefixIgnoreCase)
+    "not_has_prefix_ignore_case" => Some(NotHasPrefixIgnoreCase)
+    "has_suffix_ignore_case" => Some(HasSuffixIgnoreCase)
+    "not_has_suffix_ignore_case" => Some(NotHasSuffixIgnoreCase)
+    "contains_ignore_case" => Some(ContainsIgnoreCase)
+    "not_contains_ignore_case" => Some(NotContainsIgnoreCase)
     _ => None
   }
 }
@@ -72,6 +92,14 @@ pub fn predicate_kind_name(k : PredicateKind) -> String {
     NotHasSuffix => "not_has_suffix"
     Contains => "contains"
     NotContains => "not_contains"
+    TextEqualsIgnoreCase => "text_equals_ignore_case"
+    TextNotEqualsIgnoreCase => "text_not_equals_ignore_case"
+    HasPrefixIgnoreCase => "has_prefix_ignore_case"
+    NotHasPrefixIgnoreCase => "not_has_prefix_ignore_case"
+    HasSuffixIgnoreCase => "has_suffix_ignore_case"
+    NotHasSuffixIgnoreCase => "not_has_suffix_ignore_case"
+    ContainsIgnoreCase => "contains_ignore_case"
+    NotContainsIgnoreCase => "not_contains_ignore_case"
   }
 }
 
@@ -80,7 +108,9 @@ pub fn predicate_kind_name(k : PredicateKind) -> String {
 pub fn predicate_kind_names() -> Array[String] {
   [
     "text_equals", "text_not_equals", "has_prefix", "not_has_prefix", "has_suffix",
-    "not_has_suffix", "contains", "not_contains",
+    "not_has_suffix", "contains", "not_contains", "text_equals_ignore_case", "text_not_equals_ignore_case",
+    "has_prefix_ignore_case", "not_has_prefix_ignore_case", "has_suffix_ignore_case",
+    "not_has_suffix_ignore_case", "contains_ignore_case", "not_contains_ignore_case",
   ]
 }
 

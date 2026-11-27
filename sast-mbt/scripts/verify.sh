@@ -10,7 +10,7 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
 # GitHub windows runners ship `python`, not always `python3`.
-PY="$(command -v python3 || command -v python)"
+export PY="${PY:-$(command -v python3 || command -v python)}"
 
 echo "==> [1/11] resolve dependencies (moon check populates .mooncakes; no grammar compiled yet)"
 moon check --target native

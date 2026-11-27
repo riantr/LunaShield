@@ -1023,7 +1023,7 @@
     "query": "(pair key: (string) @key value: (string) @val) @pair",
     "predicates": [
       {
-        "kind": "contains",
+        "kind": "contains_ignore_case",
         "capture": "key",
         "value": "Origin"
       },

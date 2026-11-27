@@ -7,6 +7,7 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
 EXE="_build/native/debug/build/sast/rules-validate/rules-validate.exe"
+PY="${PY:-$(command -v python3 || command -v python)}"
 
 echo "==> build rules-validate (native)"
 moon build --target native apps/rules-validate >/dev/null
@@ -59,7 +60,7 @@ make_taint_case() {
   rm -rf "$d"
   mkdir -p "$d"
   cp rulepacks/official/rules.json rulepacks/official/taint.json rulepacks/official/manifest.json "$d/"
-  python3 - "$d/taint.json" "$d/manifest.json" "$mode" <<'PY'
+  $PY - "$d/taint.json" "$d/manifest.json" "$mode" <<'PY'
 import hashlib
 import json
 import sys

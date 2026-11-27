@@ -92,6 +92,21 @@ test "predicate kind names roundtrip through the whitelist" {
 }
 
 ///|
+test "ignore_case predicate kinds parse and serialize by their JSON names" {
+  let json = @json.parse(
+    GOOD_RULE_JSON
+    .replace(old="text_equals", new="contains_ignore_case")
+    .replace(old="\"value\":\"eval\"", new="\"value\":\"ORIGIN\""),
+  )
+  let rule = @rule.parse_rule(json)
+  assert_eq(rule.predicates[0].kind, @rule.ContainsIgnoreCase)
+  assert_eq(rule.predicates[0].value, "ORIGIN")
+  let emitted = @json.to_json(rule).stringify()
+  assert_true(emitted.contains("contains_ignore_case"))
+  assert_eq(@rule.parse_rule(@json.parse(emitted)), rule)
+}
+
+///|
 test "rule ID naming follows <PREFIX><NNN> per language" {
   assert_true(@rule.valid_rule_id("JS001", "javascript"))
   assert_true(@rule.valid_rule_id("JAVA010", "java"))

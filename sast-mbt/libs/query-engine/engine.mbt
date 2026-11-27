@@ -26,6 +26,14 @@ fn contains_substring(text : String, needle : String) -> Bool {
 }
 
 ///|
+/// Fold ASCII uppercase on both sides. Locale-independent by design: rule
+/// packs must produce the same findings on every target, and String::to_lower
+/// leaves non-ASCII code units untouched.
+fn lowercase_ascii(text : String) -> String {
+  text.to_lower()
+}
+
+///|
 /// Evaluate one host-side predicate against a captured node's source text.
 pub fn eval_predicate(p : @rule.PredicateSpec, text : String) -> Bool {
   match p.kind {
@@ -37,6 +45,22 @@ pub fn eval_predicate(p : @rule.PredicateSpec, text : String) -> Bool {
     @rule.NotHasSuffix => !text.has_suffix(p.value)
     @rule.Contains => contains_substring(text, p.value)
     @rule.NotContains => !contains_substring(text, p.value)
+    @rule.TextEqualsIgnoreCase =>
+      lowercase_ascii(text) == lowercase_ascii(p.value)
+    @rule.TextNotEqualsIgnoreCase =>
+      lowercase_ascii(text) != lowercase_ascii(p.value)
+    @rule.HasPrefixIgnoreCase =>
+      lowercase_ascii(text).has_prefix(lowercase_ascii(p.value))
+    @rule.NotHasPrefixIgnoreCase =>
+      !lowercase_ascii(text).has_prefix(lowercase_ascii(p.value))
+    @rule.HasSuffixIgnoreCase =>
+      lowercase_ascii(text).has_suffix(lowercase_ascii(p.value))
+    @rule.NotHasSuffixIgnoreCase =>
+      !lowercase_ascii(text).has_suffix(lowercase_ascii(p.value))
+    @rule.ContainsIgnoreCase =>
+      contains_substring(lowercase_ascii(text), lowercase_ascii(p.value))
+    @rule.NotContainsIgnoreCase =>
+      !contains_substring(lowercase_ascii(text), lowercase_ascii(p.value))
   }
 }
 

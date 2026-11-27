@@ -96,6 +96,116 @@ test "predicate: all eight kinds evaluate as specified" {
 }
 
 ///|
+fn ic(kind : @rule.PredicateKind, value : String) -> @rule.PredicateSpec {
+  @rule.PredicateSpec::{ kind, capture: "c", value, }
+}
+
+///|
+test "predicate: ignore_case variants fold ASCII on both sides" {
+  assert_true(
+    @query-engine.eval_predicate(ic(@rule.TextEqualsIgnoreCase, "EVAL"), "eval"),
+  )
+  assert_true(
+    !@query-engine.eval_predicate(
+      ic(@rule.TextEqualsIgnoreCase, "EVAL"),
+      "evalx",
+    ),
+  )
+  // The case-sensitive kind still rejects the same text: opt-in, not a global change.
+  assert_true(
+    !@query-engine.eval_predicate(ic(@rule.TextEquals, "EVAL"), "eval"),
+  )
+  assert_true(
+    !@query-engine.eval_predicate(
+      ic(@rule.TextNotEqualsIgnoreCase, "EVAL"),
+      "eval",
+    ),
+  )
+  assert_true(
+    @query-engine.eval_predicate(
+      ic(@rule.TextNotEqualsIgnoreCase, "EVAL"),
+      "evalx",
+    ),
+  )
+  assert_true(
+    @query-engine.eval_predicate(
+      ic(@rule.HasPrefixIgnoreCase, "RE"),
+      "request.body",
+    ),
+  )
+  assert_true(
+    @query-engine.eval_predicate(
+      ic(@rule.NotHasPrefixIgnoreCase, "RE"),
+      "payload",
+    ),
+  )
+  assert_true(
+    @query-engine.eval_predicate(
+      ic(@rule.HasSuffixIgnoreCase, "BODY"),
+      "request.Body",
+    ),
+  )
+  assert_true(
+    @query-engine.eval_predicate(
+      ic(@rule.NotHasSuffixIgnoreCase, "BODY"),
+      "request.head",
+    ),
+  )
+  assert_true(
+    @query-engine.eval_predicate(
+      ic(@rule.ContainsIgnoreCase, "ORIGIN"),
+      "allowedOrigin",
+    ),
+  )
+  assert_true(
+    @query-engine.eval_predicate(
+      ic(@rule.NotContainsIgnoreCase, "ORIGIN"),
+      "allowedHost",
+    ),
+  )
+  // ASCII-only by design: non-ASCII letters are not locale-folded.
+  assert_true(
+    !@query-engine.eval_predicate(
+      ic(@rule.TextEqualsIgnoreCase, "STRASSE"),
+      "straße",
+    ),
+  )
+}
+
+///|
+/// Synthetic source to exercise the engine; real rules pick the case kind to
+/// match the language's identifier semantics.
+fn eval_rule_ignore_case() -> @rule.Rule {
+  @rule.Rule::{
+    id: "JS011",
+    language: "javascript",
+    severity: @core.High,
+    cwe: [],
+    owasp: [],
+    query: "(call_expression function: (identifier) @callee arguments: (arguments . (_) @arg)) @call",
+    predicates: [
+      @rule.PredicateSpec::{
+        kind: @rule.TextEqualsIgnoreCase,
+        capture: "callee",
+        value: "EVAL",
+      },
+    ],
+    message: "case-insensitive dynamic code execution",
+    enabled: true,
+  }
+}
+
+///|
+test "run_rules: ignore_case predicate matches either letter case" {
+  let parsed = parse_js("eval(userInput);\nEVAL(userInput);\n")
+  let result = @query-engine.run_rules(parsed, [eval_rule_ignore_case()])
+  assert_eq(result.failures.length(), 0)
+  assert_eq(result.hits.length(), 2)
+  assert_eq(result.hits[0].primary.line, 1)
+  assert_eq(result.hits[1].primary.line, 2)
+}
+
+///|
 test "predicate: a missing capture fails closed" {
   let caps : Map[String, String] = Map([])
   caps.set("callee", "eval")

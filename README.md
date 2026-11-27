@@ -7,7 +7,8 @@ LunaShield（原研究代号 sast-mbt）是一个用 MoonBit 编写的源代码�
 
 - **7 种语言**：JavaScript / TypeScript / TSX / Python / Java / JSON / MoonBit（`.mb`，tree-sitter grammar；MoonBit grammar 绑定内置于 `grammars/moonbit/`）
 - **60 条内置规则**（`rulepacks/official/`）：注入、XSS、硬编码密钥、反序列化、弱加密、配置缺陷等；其中 MB001–MB010 为 MoonBit 首批规则
-- **宿主谓词白名单**（8 种，固定集合，规则不可执行任意代码）+ tree-sitter 原生谓词
+- **宿主谓词白名单**（16 种：8 种基础 + 8 种 `*_ignore_case`，固定集合，规则不可执行任意代码）+ tree-sitter 原生谓词；
+  大小写不敏感谓词只折叠 ASCII，非 ASCII 字符保持原样、跨目标行为一致
 - **确定性输出**：结果排序键覆盖全部字段、无时间戳、路径统一相对 POSIX，同输入两次运行逐字节相同
 - **四种报告**：Console / JSON / JUnit / SARIF 2.1.0（`findings.json`、`junit.xml`、`findings.sarif`）
 - **容错**：语法错误产出 ParseWarning 不中断扫描；二进制/超大/非法 UTF-8 文件分类跳过
@@ -25,6 +26,8 @@ LunaShield（原研究代号 sast-mbt）是一个用 MoonBit 编写的源代码�
 ```bash
 cd sast-mbt
 bash scripts/verify.sh          # 11 步全量验收（依赖拉取、补丁门禁、check/test/fmt、rules-validate、cram、golden、覆盖率、分片等价）
+python3 scripts/p2_loop.py      # P2 剩余门禁循环检查（S5/S6/S4c/MCIL/Benchmark/verify）
+python3 scripts/p3_loop.py      # P3 生态门禁循环检查（分发/HTML/Action/WASM/语言扩展/verify）
 moon build --target native --release apps/scan
 
 # 扫描
