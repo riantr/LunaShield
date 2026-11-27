@@ -4,7 +4,10 @@ import {
   "moonbitlang/async/fs" @fs,
   "spike/moonbit-grammar/pkg" @pkg,
   "moonbitlang/core/encoding/utf8",
-  "moonbitlang/async",
+  // "moonbitlang/async",
+  // Kept as documentation only: `async fn main` is language syntax, not a
+  // reference to this package, and file IO comes from "moonbitlang/async/fs"
+  // above. Importing it here would trigger an unused_package warning.
 }
 
 pkgtype(kind: "executable")
