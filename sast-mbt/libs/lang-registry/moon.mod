@@ -14,4 +14,8 @@ import {
   "moonbit-community/tree-sitter-python@0.23.6",
   "moonbit-community/tree-sitter-java@0.23.5",
   "moonbit-community/tree-sitter-json@0.24.8",
+  "moonbit-community/tree-sitter-c-sharp@0.23.5",
+  "moonbit-community/tree-sitter-go@0.25.0",
+  "moonbit-community/tree-sitter-rust@0.24.0",
+  "moonbit-community/tree-sitter-php@0.24.2",
 }

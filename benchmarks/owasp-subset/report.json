@@ -1,0 +1,13 @@
+{
+  "corpus": "owasp-subset",
+  "p1_policy": "AST-only (--taint off)",
+  "p2_policy": "AST + taint strict (--taint strict)",
+  "safe_files": 10,
+  "vulnerable_files": 4,
+  "p1_false_positives": 10,
+  "p2_false_positives": 0,
+  "p1_false_positive_rate": 1.0,
+  "false_positive_rate": 0.0,
+  "p1_true_positives": 4,
+  "p2_true_positives": 4
+}

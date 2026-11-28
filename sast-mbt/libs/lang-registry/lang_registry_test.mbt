@@ -1,7 +1,8 @@
 ///|
-test "registry: seven languages in registration order" {
+test "registry: eleven languages in registration order" {
   assert_eq(@lang-registry.language_ids(), [
-    "javascript", "typescript", "tsx", "python", "java", "json", "moonbit",
+    "javascript", "typescript", "tsx", "python", "java", "json", "moonbit", "csharp",
+    "go", "rust", "php",
   ])
 }
 
@@ -18,6 +19,10 @@ test "registry: extension mapping covers every documented extension" {
     ("java", "java"),
     ("json", "json"),
     ("mb", "moonbit"),
+    ("cs", "csharp"),
+    ("go", "go"),
+    ("rs", "rust"),
+    ("php", "php"),
   ]
   for pair in cases {
     let (ext, want) = pair
@@ -75,6 +80,7 @@ test "registry: every registration can be installed into a parser" {
 ///|
 test "registry: all_extensions lists every extension in registration order" {
   assert_eq(@lang-registry.all_extensions(), [
-    "js", "jsx", "mjs", "cjs", "ts", "tsx", "py", "java", "json", "mb",
+    "js", "jsx", "mjs", "cjs", "ts", "tsx", "py", "java", "json", "mb", "cs", "go",
+    "rs", "php",
   ])
 }

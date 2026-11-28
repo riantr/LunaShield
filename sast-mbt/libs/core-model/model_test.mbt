@@ -52,6 +52,7 @@ test "SourceLoc and Finding fields" {
     message: "eval",
     snippet: "eval(x)",
     fingerprint: "abc",
+    baseline_state: @core-model.NotCompared,
   }
   assert_eq(finding.rule_id, "JS001")
   assert_eq(finding.severity, @core-model.High)

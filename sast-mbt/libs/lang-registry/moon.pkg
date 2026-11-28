@@ -6,4 +6,8 @@ import {
   "moonbit-community/tree-sitter-python" @tspy,
   "moonbit-community/tree-sitter-java" @tsjava,
   "moonbit-community/tree-sitter-json" @tsjson,
+  "moonbit-community/tree-sitter-c-sharp" @tscs,
+  "moonbit-community/tree-sitter-go" @tsgo,
+  "moonbit-community/tree-sitter-rust" @tsrust,
+  "moonbit-community/tree-sitter-php" @tsphp,
 }

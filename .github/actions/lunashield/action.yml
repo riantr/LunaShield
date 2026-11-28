@@ -1,0 +1,83 @@
+name: LunaShield SAST
+description: Build LunaShield from a pinned ref and scan a directory with the official rule pack (Linux runners)
+author: LunaShield
+
+inputs:
+  path:
+    description: Directory to scan, relative to the caller workspace
+    required: false
+    default: .
+  ref:
+    description: LunaShield git ref to build (tag or commit for reproducible scans)
+    required: false
+    default: main
+  rules:
+    description: Rule pack directory, relative to the caller workspace
+    required: false
+    default: ''
+  format:
+    description: Comma-separated reporters (console,json,junit,sarif,html)
+    required: false
+    default: console,json
+  fail_on:
+    description: Severity gate (critical|high|medium|low|info|never)
+    required: false
+    default: high
+  taint:
+    description: Taint mode (off|report|strict)
+    required: false
+    default: strict
+  output:
+    description: Directory for report files, relative to the caller workspace
+    required: false
+    default: lunashield-reports
+outputs:
+  report_dir:
+    description: Directory containing the generated reports
+    value: ${{ inputs.output }}
+
+runs:
+  using: composite
+  steps:
+    - name: Check out LunaShield at the pinned ref
+      uses: actions/checkout@v4
+      with:
+        repository: ren-yongxiang/LunaShield
+        ref: ${{ inputs.ref }}
+        path: .lunashield-src
+        persist-credentials: false
+
+    - name: Install MoonBit CLI
+      shell: bash
+      run: |
+        set -euo pipefail
+        if ! command -v moon >/dev/null 2>&1; then
+          curl -fsSL https://cli.moonbitlang.com/install/unix.sh | bash
+        fi
+        moon --version
+
+    - name: Build scan binary
+      shell: bash
+      run: |
+        set -euo pipefail
+        cd .lunashield-src/sast-mbt
+        moon build --target native --release apps/scan
+
+    - name: Scan
+      shell: bash
+      run: |
+        set -euo pipefail
+        SCAN="$PWD/.lunashield-src/sast-mbt/_build/native/release/build/sast/scan/scan"
+        RULES="${{ inputs.rules }}"
+        ARGS=(--format "${{ inputs.format }}" --fail-on "${{ inputs.fail_on }}" \
+              --taint "${{ inputs.taint }}" --out "${{ inputs.output }}")
+        if [ -n "$RULES" ]; then ARGS+=(--rules "$RULES"); fi
+        "$SCAN" "${{ inputs.path }}" "${ARGS[@]}"
+
+    - name: Upload reports as artifacts
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: lunashield-reports
+        path: ${{ inputs.output }}
+        if-no-files-found: ignore

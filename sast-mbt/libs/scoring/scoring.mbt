@@ -204,6 +204,7 @@ pub fn finding_from_hit(h : @core.RawHit) -> @core.Finding {
     message: h.message,
     snippet: h.snippet,
     fingerprint: make_fingerprint(h.rule_id, h.snippet),
+    baseline_state: NotCompared,
   }
 }
 

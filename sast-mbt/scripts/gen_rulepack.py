@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Generate the official rule pack (60 rules: 50 MVP + 10 MoonBit) and fixtures.
+"""Generate the official rule pack (64 rules: 50 MVP + 10 MoonBit + 4 P3 languages) and fixtures.
 
 One-off authoring helper: the generated `rules.json` and fixtures are the
-committed source of truth, this script only makes it feasible to write 60 rules
-plus 180 fixture files without copy-paste drift. Re-run after editing the table.
+committed source of truth, this script only makes it feasible to write 64 rules
+plus 192 fixture files without copy-paste drift. Re-run after editing the table.
 
 Usage:
     python3 scripts/gen_rulepack.py            # write files
@@ -50,6 +50,10 @@ MB_CONST_STR = '(const_definition (uppercase_identifier) @name (type_annotation)
 MB_EXTERN = '(function_definition (external_linkage (string_literal) @lib) (function_identifier) @fn) @decl'
 MB_HMAC = '(apply_expression (qualified_identifier (package_identifier) @pkg (dot_lowercase_identifier) @fn) (arguments (argument) (argument) (argument (labelled_argument (lowercase_identifier) @label (constructor_expression (uppercase_identifier) @alg))))) @call'
 MB_EMPTY_CATCH = '((try_catch_clause) @catch (#not-match? @catch "=>"))'
+CS_INVOKE = '(invocation_expression (member_access_expression) @target (argument_list (argument) @arg)) @call'
+GO_CALL = '(call_expression (selector_expression) @target (argument_list . (_) @arg)) @call'
+RS_CALL = '(call_expression (scoped_identifier) @target (arguments (_) @arg)) @call'
+PHP_CALL = '(function_call_expression (name) @fn (arguments . (argument) @arg)) @call'
 
 QUOTE = '"'
 
@@ -503,6 +507,35 @@ RULES = [
         'fn main {\n  try { risky() } catch { }\n}\n',
         'fn main {\n  try { risky() } catch { e => println(e) }\n}\n',
     ),
+    # ---- P3 language expansion: one injection rule per new grammar ----
+    (
+        "CS001", "csharp", "high", [78], ["A03:2021"], CS_INVOKE,
+        [p("contains", "target", "Process.Start"), cond("arg")],
+        "Command injection via Process.Start",
+        "Process.Start(userInput);",
+        'Process.Start("notepad");',
+    ),
+    (
+        "GO001", "go", "high", [78], ["A03:2021"], GO_CALL,
+        [p("contains", "target", "exec.Command"), cond("arg")],
+        "Command injection via exec.Command",
+        "exec.Command(userInput)",
+        'exec.Command("echo")',
+    ),
+    (
+        "RS001", "rust", "high", [78], ["A03:2021"], RS_CALL,
+        [p("contains", "target", "Command::new"), cond("arg")],
+        "Command injection via Command::new",
+        "std::process::Command::new(userInput);",
+        'std::process::Command::new("echo");',
+    ),
+    (
+        "PHP001", "php", "high", [78], ["A03:2021"], PHP_CALL,
+        [p("text_equals", "fn", "system"), cond("arg")],
+        "Command injection via system()",
+        "system($userInput);",
+        'system("echo hi");',
+    ),
 ]
 
 EXT = {
@@ -513,6 +546,10 @@ EXT = {
     "java": "java",
     "json": "json",
     "moonbit": "mb",
+    "csharp": "cs",
+    "go": "go",
+    "rust": "rs",
+    "php": "php",
 }
 
 # MoonBit snippets are already complete source files; only two put the

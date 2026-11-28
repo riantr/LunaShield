@@ -4,6 +4,7 @@ import {
   "moonbitlang/async",
   "moonbitlang/async/fs",
   "moonbitlang/core/env",
+  "sast/core-model" @core,
   "sast/config",
   "sast/orchestrator",
   "sast/report",

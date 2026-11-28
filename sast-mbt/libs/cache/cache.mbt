@@ -136,6 +136,7 @@ pub fn from_cached(c : CachedFinding) -> @core.Finding {
     message: c.message,
     snippet: c.snippet,
     fingerprint: c.fingerprint,
+    baseline_state: @core.NotCompared,
   }
 }
 

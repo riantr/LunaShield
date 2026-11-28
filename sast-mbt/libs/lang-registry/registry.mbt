@@ -76,6 +76,10 @@ pub fn all_language_specs() -> Array[LanguageSpec] {
     spec("java", ["java"], () => @tsjava.language()),
     spec("json", ["json"], () => @tsjson.language()),
     spec("moonbit", ["mb"], () => @tsmb.language()),
+    spec("csharp", ["cs"], () => @tscs.language()),
+    spec("go", ["go"], () => @tsgo.language()),
+    spec("rust", ["rs"], () => @tsrust.language()),
+    spec("php", ["php"], () => @tsphp.language_php_only()),
   ]
 }
 

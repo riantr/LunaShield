@@ -30,7 +30,7 @@ from merge_reports import merge, write_report
 
 ROOT = Path(__file__).resolve().parent.parent
 EXE = ROOT / "_build/native/debug/build/sast/scan/scan.exe"
-DEFAULT_LANGS = "javascript,typescript,tsx,python,java,json,moonbit"
+DEFAULT_LANGS = "javascript,typescript,tsx,python,java,json,moonbit,csharp,go,rust,php"
 
 
 def passthrough(argv: list[str]) -> list[str]:

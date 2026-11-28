@@ -11,6 +11,7 @@ fn sample_finding() -> @core.Finding {
     message: "Dynamic code execution via eval()",
     snippet: "eval",
     fingerprint: "cad6a9d4",
+    baseline_state: @core.NotCompared,
   }
 }
 

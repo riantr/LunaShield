@@ -39,7 +39,7 @@ from pathlib import Path
 from merge_reports import merge, write_report
 
 ROOT = Path(__file__).resolve().parent.parent
-DEFAULT_LANGS = "javascript,typescript,tsx,python,java,json,moonbit"
+DEFAULT_LANGS = "javascript,typescript,tsx,python,java,json,moonbit,csharp,go,rust,php"
 
 
 def find_exe() -> Path:

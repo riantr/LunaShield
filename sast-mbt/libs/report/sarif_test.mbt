@@ -15,6 +15,7 @@ fn sarif_finding(
     message,
     snippet,
     fingerprint: "cad6a9d402bd4d6c926a60f7d06d046c4fdf4b613dab5be32c2189e45cd3da31",
+    baseline_state: @core.NotCompared,
   }
 }
 
@@ -54,6 +55,27 @@ test "sarif: log header and driver are stable" {
   assert_true(
     text.has_suffix(
       "\"results\":[{\"ruleId\":\"JS001\",\"level\":\"error\",\"message\":{\"text\":\"Dynamic code execution via eval()\"},\"locations\":[{\"physicalLocation\":{\"artifactLocation\":{\"uri\":\"src/a.js\"},\"region\":{\"startLine\":2,\"startColumn\":3,\"byteOffset\":17}}}],\"partialFingerprints\":{\"primaryLocationLineHash\":\"cad6a9d402bd4d6c926a60f7d06d046c4fdf4b613dab5be32c2189e45cd3da31\"}}]}]}",
+    ),
+  )
+}
+
+///|
+test "sarif: baselineState appears only for compared results" {
+  let plain = sarif_result_of([sarif_finding(@core.High, "m", "eval")])
+  assert_true(!@report.render_sarif(plain).contains("baselineState"))
+  let compared : @core.Finding = {
+    ..sarif_finding(@core.High, "m", "eval"),
+    baseline_state: @core.New,
+  }
+  let text = @report.render_sarif(sarif_result_of([compared]))
+  assert_true(text.contains("\"baselineState\":\"new\""))
+  let unchanged : @core.Finding = {
+    ..compared,
+    baseline_state: @core.Unchanged,
+  }
+  assert_true(
+    @report.render_sarif(sarif_result_of([unchanged])).contains(
+      "\"baselineState\":\"unchanged\"",
     ),
   )
 }

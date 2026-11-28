@@ -6,7 +6,7 @@ fn usage() -> String {
   "usage: scan <root> [options]\n" +
   "  --lang <csv>          languages to scan (default: all)\n" +
   "  --rules <path>        rule pack directory or rules.json (default: rulepacks/official)\n" +
-  "  --format <csv>        console,json,junit,sarif (default: console,json)\n" +
+  "  --format <csv>        console,json,junit,sarif,html (default: console,json)\n" +
   "  --out <dir>           write reports into dir instead of stdout\n" +
   "  --fail-on <severity>  critical|high|medium|low|info|never (default: high)\n" +
   "  --shard <i>/<n>       scan only shard i of n\n" +
@@ -16,7 +16,8 @@ fn usage() -> String {
   "  --cache-dir <dir>     cache location (default: .lunashield-cache)\n" +
   "  --fast-cache          trust (size, mtime) and skip reading unchanged files\n" +
   "                        (implies --incremental; opt-in, mtime is not a content proof)\n" +
-  "  --taint <mode>        off|report|strict taint analysis (default: off)\n"
+  "  --taint <mode>        off|report|strict taint analysis (default: off)\n" +
+  "  --baseline <path>     JSON report from an earlier scan; report only new findings\n"
 }
 
 ///|
@@ -99,6 +100,7 @@ async fn main {
   let mut root = ""
   let mut cfg = @config.default_config(".")
   let mut out_dir = ""
+  let mut baseline_path = ""
   let ignore_patterns : Array[String] = []
   let mut i = 1
   while i < args.length() {
@@ -173,6 +175,9 @@ async fn main {
       let value = arg_or_fail(args, i)
       cfg = { ..cfg, cache_dir: value, }
       i += 2
+    } else if arg == "--baseline" {
+      baseline_path = arg_or_fail(args, i)
+      i += 2
     } else if arg == "--taint" {
       let value = arg_or_fail(args, i)
       let mode = match @config.parse_taint_mode(value) {
@@ -218,6 +223,19 @@ async fn main {
     }
   }
 
+  let mut result = outcome.result
+  if baseline_path.length() > 0 {
+    guard @fs.exists(baseline_path) else {
+      fail("baseline report not found: \{baseline_path}")
+    }
+    let text = @fs.read_file(baseline_path).text()
+    let known = match @core.parse_baseline_fingerprints(text) {
+      Some(fingerprints) => fingerprints
+      None => fail("baseline is not a LunaShield JSON report: \{baseline_path}")
+    }
+    result = @core.keep_new(@core.mark_baseline(result, known))
+  }
+
   // Emit in the canonical order from `supported_formats`, never in user CSV
   // order: mixed `--format` invocations must stay byte-stable.
   for fmt in @report.supported_formats() {
@@ -227,7 +245,7 @@ async fn main {
     match @report.reporter_for(fmt) {
       None => ()
       Some(rep) => {
-        let text = rep.render(outcome.result)
+        let text = rep.render(result)
         match rep.file_name() {
           None => {
             println(text)
@@ -249,7 +267,7 @@ async fn main {
   }
 
   let mut gated = false
-  for f in outcome.result.findings {
+  for f in result.findings {
     if @config.meets_fail_on(cfg, f.severity) {
       gated = true
     }

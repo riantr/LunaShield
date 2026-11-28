@@ -42,6 +42,18 @@ pub(all) struct Finding {
   message : String
   snippet : String
   fingerprint : String
+  /// Relation to an optional baseline scan. `NotCompared` when no baseline was
+  /// supplied, so existing reports stay byte-for-byte unchanged.
+  baseline_state : BaselineState
+}
+
+///|
+/// SARIF-compatible baseline relation (P2-S5). Set only when `--baseline` is used.
+#derive(Debug, Eq)
+pub(all) enum BaselineState {
+  NotCompared
+  New
+  Unchanged
 }
 
 ///|

@@ -26,6 +26,9 @@ pub struct JunitReporter {}
 pub struct SarifReporter {}
 
 ///|
+pub struct HtmlReporter {}
+
+///|
 pub impl Reporter for ConsoleReporter with fn name(_self) {
   "console"
 }
@@ -89,7 +92,7 @@ pub impl Reporter for SarifReporter with fn file_name(_self) {
 /// Canonical emission order. `apps/scan` iterates this (not the user's CSV order)
 /// so mixed `--format` invocations stay deterministic.
 pub fn supported_formats() -> Array[String] {
-  ["console", "json", "junit", "sarif"]
+  ["console", "json", "junit", "sarif", "html"]
 }
 
 ///|
@@ -100,6 +103,7 @@ pub fn reporter_for(format : String) -> &Reporter? {
     "json" => Some(JsonReporter::{ })
     "junit" => Some(JunitReporter::{ })
     "sarif" => Some(SarifReporter::{ })
+    "html" => Some(HtmlReporter::{ })
     _ => None
   }
 }

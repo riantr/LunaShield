@@ -11,6 +11,7 @@ fn sample_result() -> @core.ScanResult {
     message: "Dynamic code execution via eval()",
     snippet: "eval",
     fingerprint: "cad6a9d402bd4d6c926a60f7d06d046c4fdf4b613dab5be32c2189e45cd3da31",
+    baseline_state: @core.NotCompared,
   }
   let warning : @core.ParseWarning = {
     path: "b.js",
@@ -97,6 +98,7 @@ test "junit: xml special characters are escaped" {
     message: "x < y && z > w \"q\" 'r'",
     snippet: "<script>",
     fingerprint: "f",
+    baseline_state: @core.NotCompared,
   }
   let result : @core.ScanResult = {
     findings: [evil],
@@ -132,6 +134,7 @@ test "render: medium confidence is spelled out in the JSON DTO" {
     message: "m",
     snippet: "eval",
     fingerprint: "f",
+    baseline_state: @core.NotCompared,
   }
   let result : @core.ScanResult = {
     findings: [f],

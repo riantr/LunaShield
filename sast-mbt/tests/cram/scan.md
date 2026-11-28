@@ -43,6 +43,26 @@ $ mkdir -p src && printf '%s' '[{"id":"JS001","language":"javascript","severity"
 {"version":"0.1.0","stats":{"files_scanned":1,"files_skipped":0,"bytes_scanned":17,"raw_hits":1},"warnings":[],"skipped_files":[],"findings":[{"rule_id":"JS001","severity":"high","confidence":"high","cwe":[95],"owasp":["A03:2021"],"primary":{"path":"a.js","line":1,"column":1,"byte_offset":0},"message":"Dynamic code execution via eval()","snippet":"eval","fingerprint":"cad6a9d402bd4d6c926a60f7d06d046c4fdf4b613dab5be32c2189e45cd3da31"}]}
 ```
 
+## HTML report is written to --out with escaped finding text
+
+```mooncram
+$ rm -rf out && mkdir -p src && printf '%s' '[{"id":"JS001","language":"javascript","severity":"high","cwe":[95],"owasp":["A03:2021"],"query":"(call_expression function: (identifier) @callee arguments: (arguments . (_) @arg)) @call","predicates":[{"kind":"text_equals","capture":"callee","value":"eval"}],"message":"Dynamic code execution","enabled":true}]' > rules.json && printf 'eval(userInput);\n' > src/a.js && (scan.exe src --rules rules.json --format html --out out --fail-on never > /dev/null; grep -o '<th>Rule</th>' out/findings.html; grep -o 'Dynamic code execution' out/findings.html; rm -rf out)
+<th>Rule</th>
+Dynamic code execution
+```
+
+## `--baseline` reports only new findings and marks SARIF results
+
+```mooncram
+$ rm -rf base out src && mkdir -p src && printf '%s' '[{"id":"CFG001","language":"json","severity":"high","cwe":[798],"owasp":["A02:2021"],"query":"(pair key: (string) @key value: (string) @val) @pair","predicates":[{"kind":"contains","capture":"key","value":"password"}],"message":"Plaintext password in configuration","enabled":true}]' > rules.json && printf '{"password":"one"}\n' > src/a.json && (scan.exe src --rules rules.json --format json --out base > /dev/null; printf '{"password":"one","db_password":"two"}\n' > src/a.json; scan.exe src --rules rules.json --format console,sarif --out out --baseline base/findings.json --fail-on never; grep -o '"baselineState":"new"' out/findings.sarif; rm -rf base out src)
+LunaShield 0.1.0
+files: 1 scanned, 0 skipped, 2 raw hits
+findings: 1 (critical 0, high 1, medium 0, low 0, info 0)
+a.json:1:19 CFG001 [high] Plaintext password in configuration
+warnings: 0
+"baselineState":"new"
+```
+
 ## Syntax error is reported as a warning and the scan continues
 
 ```mooncram

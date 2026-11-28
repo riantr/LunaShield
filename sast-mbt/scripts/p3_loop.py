@@ -78,11 +78,14 @@ def check_reporter() -> tuple[bool, str]:
     text = read(SAST / "libs" / "report" / "reporter.mbt")
     if "pub(open) trait Reporter" not in text:
         return False, "Reporter trait missing"
-    reporters = ["ConsoleReporter", "JsonReporter", "JunitReporter", "SarifReporter"]
+    reporters = [
+        "ConsoleReporter", "JsonReporter", "JunitReporter", "SarifReporter",
+        "HtmlReporter",
+    ]
     missing = [name for name in reporters if name not in text]
     if missing:
         return False, "reporters missing: " + ", ".join(missing)
-    return True, "Reporter trait with four built-in reporters"
+    return True, "Reporter trait with five built-in reporters"
 
 
 def check_mooncakes() -> tuple[bool, str]:

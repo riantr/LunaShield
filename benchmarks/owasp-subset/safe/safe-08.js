@@ -1,0 +1,1 @@
+eval(encodeURIComponent(location.search));

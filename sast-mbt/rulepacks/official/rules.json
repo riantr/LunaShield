@@ -1471,5 +1471,109 @@
     "predicates": [],
     "message": "Exception swallowed by empty catch",
     "enabled": true
+  },
+  {
+    "id": "CS001",
+    "language": "csharp",
+    "severity": "high",
+    "cwe": [
+      78
+    ],
+    "owasp": [
+      "A03:2021"
+    ],
+    "query": "(invocation_expression (member_access_expression) @target (argument_list (argument) @arg)) @call",
+    "predicates": [
+      {
+        "kind": "contains",
+        "capture": "target",
+        "value": "Process.Start"
+      },
+      {
+        "kind": "not_has_prefix",
+        "capture": "arg",
+        "value": "\""
+      }
+    ],
+    "message": "Command injection via Process.Start",
+    "enabled": true
+  },
+  {
+    "id": "GO001",
+    "language": "go",
+    "severity": "high",
+    "cwe": [
+      78
+    ],
+    "owasp": [
+      "A03:2021"
+    ],
+    "query": "(call_expression (selector_expression) @target (argument_list . (_) @arg)) @call",
+    "predicates": [
+      {
+        "kind": "contains",
+        "capture": "target",
+        "value": "exec.Command"
+      },
+      {
+        "kind": "not_has_prefix",
+        "capture": "arg",
+        "value": "\""
+      }
+    ],
+    "message": "Command injection via exec.Command",
+    "enabled": true
+  },
+  {
+    "id": "RS001",
+    "language": "rust",
+    "severity": "high",
+    "cwe": [
+      78
+    ],
+    "owasp": [
+      "A03:2021"
+    ],
+    "query": "(call_expression (scoped_identifier) @target (arguments (_) @arg)) @call",
+    "predicates": [
+      {
+        "kind": "contains",
+        "capture": "target",
+        "value": "Command::new"
+      },
+      {
+        "kind": "not_has_prefix",
+        "capture": "arg",
+        "value": "\""
+      }
+    ],
+    "message": "Command injection via Command::new",
+    "enabled": true
+  },
+  {
+    "id": "PHP001",
+    "language": "php",
+    "severity": "high",
+    "cwe": [
+      78
+    ],
+    "owasp": [
+      "A03:2021"
+    ],
+    "query": "(function_call_expression (name) @fn (arguments . (argument) @arg)) @call",
+    "predicates": [
+      {
+        "kind": "text_equals",
+        "capture": "fn",
+        "value": "system"
+      },
+      {
+        "kind": "not_has_prefix",
+        "capture": "arg",
+        "value": "\""
+      }
+    ],
+    "message": "Command injection via system()",
+    "enabled": true
   }
 ]

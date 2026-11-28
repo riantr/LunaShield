@@ -4,8 +4,12 @@
 test "default config matches MVP CLI contract" {
   let c = @config.default_config("/tmp/project")
   assert_eq(c.root, "/tmp/project")
-  assert_eq(c.langs.length(), 7)
+  assert_eq(c.langs.length(), 11)
   assert_true(c.langs.contains("moonbit"))
+  assert_true(c.langs.contains("csharp"))
+  assert_true(c.langs.contains("go"))
+  assert_true(c.langs.contains("rust"))
+  assert_true(c.langs.contains("php"))
   assert_eq(c.rules_path, "rulepacks/official")
   assert_eq(c.formats, ["console", "json"])
   assert_eq(c.shard_index, 0)
@@ -54,7 +58,8 @@ test "shard assignment is deterministic and partitions paths" {
   let c1 = @config.ScanConfig::{ ..c0, shard_index: 1, }
   let c2 = @config.ScanConfig::{ ..c0, shard_index: 2, }
   let paths = [
-    "a.js", "b.py", "src/c.ts", "deep/dir/e.java", "z.json", "m/a.mb",
+    "a.js", "b.py", "src/c.ts", "deep/dir/e.java", "z.json", "m/a.mb", "s/a.cs",
+    "g/a.go", "r/a.rs", "p/a.php",
   ]
   for p in paths {
     let hit = [

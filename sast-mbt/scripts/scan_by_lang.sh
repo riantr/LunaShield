@@ -23,7 +23,7 @@ cd "$ROOT"
 
 EXE="_build/native/debug/build/sast/scan/scan.exe"
 PY="$(command -v python3 || command -v python)"
-DEFAULT_LANGS="javascript,typescript,tsx,python,java,json,moonbit"
+DEFAULT_LANGS="javascript,typescript,tsx,python,java,json,moonbit,csharp,go,rust,php"
 
 usage() {
   sed -n '2,18p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'

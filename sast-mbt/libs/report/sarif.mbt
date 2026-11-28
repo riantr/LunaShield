@@ -81,6 +81,13 @@ fn sarif_rules(findings : Array[@core.Finding]) -> String {
 
 ///|
 fn sarif_result(f : @core.Finding) -> String {
+  // P2-S5: only emit baselineState when a baseline was supplied, so reports
+  // without --baseline remain byte-for-byte identical to the P1 contract.
+  let baseline_state = match f.baseline_state {
+    @core.NotCompared => ""
+    @core.New => ",\"baselineState\":\"new\""
+    @core.Unchanged => ",\"baselineState\":\"unchanged\""
+  }
   "{" +
   "\"ruleId\":" +
   quoted(f.rule_id) +
@@ -106,6 +113,7 @@ fn sarif_result(f : @core.Finding) -> String {
   "\"partialFingerprints\":{\"primaryLocationLineHash\":" +
   quoted(f.fingerprint) +
   "}" +
+  baseline_state +
   "}"
 }
 
