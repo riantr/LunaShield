@@ -1,7 +1,6 @@
 # MCIL go/no-go spike（P2）
 
-**结论：原为 NO-GO，2026-11-28 复测后修订为「有条件 GO」。** 暂不把 `Lampese/MCIL@0.1.1` 直接纳入 LunaShield 的 C/C++ 深度分析路径；
-C/C++ 仍归属「未来可选」，并按 R10 借鉴其 IR/CFG/dataflow 设计。是否正式纳入取决于 `sample.c` 完整判据复跑结果，以及是否接受维护私有 fork 的长期成本。证据见下节。
+**结论：技术判据 GO（2026-11-28 复测）。** 构建、`sample.c` 解析、CFG 导出三项全部通过；是否正式纳入 LunaShield 的 C/C++ 深度分析路径，仍取决于是否接受维护本地 fork（清单/语法迁移）的长期成本。C/C++ 目前仍归属「未来可选」，并按 R10 借鉴其 IR/CFG/dataflow 设计。证据见下节。
 
 ## 实测环境与步骤
 
@@ -59,7 +58,12 @@ MCIL 固定的 `moonbitlang/async@0.15.0` 也是旧 `moon.mod.json` 格式，需
 
 继续清理最后 46 个：`inliner.mbt:2`、`cabs2cil.mbt:84`、`parser.mbt:9`、`preprocess.mbt:41` 四处 `suberror X String` 改为带位置参数构造器的新写法；`runall.mbt:32/97/149` 三处 `for...else` 改为普通循环；驱动 `spike/main.mbt` 同步改用 `catch` 处理 `raise` 错误，并调用 `compute_file_cfg`。重编译 `moon run spike --target native`：**0 错误、EXIT=0**，输出 `MCIL parse + cabs2cil OK` 与 `fun=main stmts=1 sinks=1`。原始 24 个错误 + 后续 69 个错误全部清零。
 
-因此原先 NO-GO 的技术理由（旧清单与旧语法不兼容最新 moonc）在本地 fork + 迁移后已消除。驱动已切换到 `sample.c` 并加入 `print_cfg_dot`，完整判据待复跑确认。
+复跑 `moon run spike --target native`：**0 错误、EXIT=0**，输出 `MCIL parse + cabs2cil OK`，并打印两个函数的 CFG DOT：
+
+- `run_query`：3 stmts / 1 sink，CFG `0 -> 1 -> 2`
+- `main`：4 stmts / 1 sink，CFG `5(if) -> 4(block) -> 3(instr) -> 6(return)`，另有 `5 -> 6` 旁路
+
+原先 NO-GO 的技术理由（旧清单与旧语法不兼容最新 moonc）在本地 fork + 迁移后已消除，三项判据全部通过。
 
 ## 判据与决策
 
@@ -68,11 +72,11 @@ MCIL 固定的 `moonbitlang/async@0.15.0` 也是旧 `moon.mod.json` 格式，需
 | 判据 | 结果 | 证据 |
 |---|---|---|
 | 直接构建 | 通过（本地 fork + 迁移） | 清单迁到 `moon.mod`、async 升到 0.22.10、语法适配后 `moon run` 0 错误 |
-| 解析 C99 样例 | 最小样例通过；`sample.c` 待复跑 | 驱动已解析 `int main(void){return 0;}` 并生成 CIL；`sample.c` 嵌入脚本已就绪 |
-| 导出 CFG | 最小样例通过；`sample.c` 待复跑 | `compute_file_cfg` / `print_cfg_dot` 可用，最小样例输出 1 stmt / 1 sink |
+| 解析 C99 样例 | 通过 | `sample.c` 解析出 `run_query` 与 `main` 两个函数并生成 CIL |
+| 导出 CFG | 通过 | `print_cfg_dot` 输出两个函数的 DOT 图，含分支旁路 |
 
-因此原 **NO-GO** 结论需修订：在最新版 moonc 下，MCIL 可通过本地 fork + 清单/语法迁移完成构建与最小样例分析；
-是否纳入仍取决于 `sample.c` 完整判据复跑结果，以及是否接受维护私有 fork 的长期成本。
+因此技术判据 **GO**：在最新版 moonc 下，MCIL 通过本地 fork + 清单/语法迁移后，构建、C99 样例解析与 CFG 导出三项全部通过。
+是否正式纳入仍取决于是否接受维护私有 fork 的长期成本。
 
 ## 保留价值与替代路线
 
@@ -80,6 +84,5 @@ MCIL 固定的 `moonbitlang/async@0.15.0` 也是旧 `moon.mod.json` 格式，需
   是后续自研过程内分析的参考；其源码已在 spike 中解压检查过（不入库）。
 - 已落地的替代：`sast-mbt/libs/dataflow` 提供显式 CFG + worklist 不动点分析
   （`build_cfg` / `solve` / `reachable`），以变量集合为格，支持分支旁路和循环收敛。
-- 若未来重启 C 线，前置条件是 MCIL 发布支持 `moon.mod`、源码适配最新 moonc
-  （去掉旧式 `for...else` 语法、显式导入 core 包、跟进 `ToStringView` 等 API），且依赖与主工程 async 对齐；
-  届时用本目录的 `sample.c` 重跑同一命令即可重新评估。
+- 若正式纳入 C 线，需把本次本地 fork 的清单/语法迁移补丁固化为可维护补丁集，并跟进 MCIL 上游对新清单格式与 moonc 的适配；
+  `sample.c` 可继续作为回归样例。
